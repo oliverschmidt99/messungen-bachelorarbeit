@@ -1,0 +1,1199 @@
+{
+    "dia_messstrecke_neu": {
+        "current": [
+            4000.0
+        ],
+        "geos": [
+            "Parallel",
+            "Messstrecke"
+        ],
+        "wandlers": [
+            "Celsa ALO 12070 0R0",
+            "Referenz Messstrecke Unbekannt"
+        ],
+        "duts": [
+            "Rogowsikeinspeisung",
+            "K3",
+            "PAC1"
+        ],
+        "comp_mode": "Nennwert (Ideal)",
+        "sync_axes": true,
+        "y_limit": 2.7,
+        "acc_class": 0.2,
+        "show_err_bars": true,
+        "custom_colors": {
+            "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "#1212A1",
+            "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": "#CC2979",
+            "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "#5AA112"
+        },
+        "custom_legends": {
+            "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "Rogowski-Spulen | Kl. 0,2",
+            "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": "PAC 4220 | Celsa ICG 6000/5 Kl. 0,2S",
+            "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "K-3 | Celsa ICG 6000/5 Kl. 0,2S"
+        },
+        "custom_titles": {
+            "Gesamt\u00fcbersicht (Tab 1)": "4000 A | Messabweichung und Standardabweichung | Neuer Versuchsaufbau",
+            "Scatter-Plot": "Kosten-Nutzen-Analyse",
+            "Performance-Index": "4000 A | Performance Index | Neuer Versuchsaufbau",
+            "Heatmap": "Fehler-Heatmap",
+            "Boxplot": "Fehlerverteilung (Boxplot)",
+            "Pareto": "Pareto-Analyse",
+            "Radar": "Radar-Profil"
+        },
+        "eco_x": "Preis (\u20ac)",
+        "eco_y": [
+            "Fehler Niederstrom",
+            "Fehler Nennstrom",
+            "Fehler \u00dcberlast"
+        ],
+        "eco_type": "Performance-Index"
+    },
+    "dia_messstrecke_alt": {
+        "current": [
+            4000.0
+        ],
+        "geos": [
+            "Parallel",
+            "Messstrecke"
+        ],
+        "wandlers": [
+            "Celsa ALO 12070 0R0",
+            "Referenz Messstrecke Unbekannt"
+        ],
+        "duts": [
+            "Rogowsikeinspeisung",
+            "K3"
+        ],
+        "comp_mode": "Nennwert (Ideal)",
+        "sync_axes": true,
+        "y_limit": 2.7,
+        "acc_class": 0.2,
+        "show_err_bars": true,
+        "custom_colors": {
+            "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "#5AA112",
+            "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "#1313BD"
+        },
+        "custom_legends": {
+            "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "K-3 | Celsa ICG 6000/5 Kl. 0,2S",
+            "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "Rogowski-Spulen | Kl. 0,2"
+        },
+        "custom_titles": {
+            "Gesamt\u00fcbersicht (Tab 1)": "4000 A | Messabweichung und Standardabweichung | Vorheriger Versuchsaufbau",
+            "Scatter-Plot": "Kosten-Nutzen-Analyse",
+            "Performance-Index": "4000 A | Performance Index | Vorheriger Versuchsaufbau",
+            "Heatmap": "Fehler-Heatmap",
+            "Boxplot": "Fehlerverteilung (Boxplot)",
+            "Pareto": "Pareto-Analyse",
+            "Radar": "Radar-Profil"
+        },
+        "eco_x": "Preis (\u20ac)",
+        "eco_y": [
+            "Fehler Niederstrom",
+            "Fehler Nennstrom",
+            "Fehler \u00dcberlast"
+        ],
+        "eco_type": "Radar"
+    },
+    "dia_2000A": {
+        "current": [
+            2000.0
+        ],
+        "geos": [
+            "Parallel",
+            "Dreieck"
+        ],
+        "wandlers": [
+            "Celsa ALO 10030 1R35",
+            "Celsa ALO 8030 K 8R1",
+            "MBS ASK101.4 8R1",
+            "Redur 13A1030.3ffp 0R0",
+            "Redur 13A1030.3ffp 8R1"
+        ],
+        "duts": [
+            "Einspeisung",
+            "Pruefling"
+        ],
+        "comp_mode": "Messger\u00e4t (z.B. PAC1)",
+        "sync_axes": true,
+        "y_limit": 3.0,
+        "acc_class": 1.0,
+        "show_err_bars": true,
+        "custom_colors": {
+            "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "#d9772a",
+            "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | Pruefling": "#e6863a",
+            "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "#2f6fb0",
+            "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "#4a8fd1",
+            "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "#c86422",
+            "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | Pruefling": "#2f8f4e",
+            "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "#6aa9e3",
+            "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | Pruefling": "#f09a55",
+            "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "#8bbce9"
+        },
+        "custom_legends": {
+            "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 8,1 \u03a9 | Parallel (2000A)",
+            "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 0,0 \u03a9 | Parallel (2000A)",
+            "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | Pruefling | 1,35 \u03a9 | Parallel (2000A)",
+            "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | Pruefling | 8,1 \u03a9 | Parallel (2000A)",
+            "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 8,1 \u03a9 | Dreieck (2000A)",
+            "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | Pruefling": "MBS ASK101.4 | Pruefling | 8,1 \u03a9 | Dreieck (2000A)",
+            "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | Pruefling | 1,35 \u03a9 | Dreieck (2000A)",
+            "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 0,0 \u03a9 | Dreieck (2000A)",
+            "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | Pruefling | 8,1 \u03a9 | Dreieck (2000A)"
+        },
+        "custom_titles": {
+            "Gesamt\u00fcbersicht (Tab 1)": "4000\u00a0A\u00a0| Fehlerkurve\u00a0| Celsa",
+            "Scatter-Plot": "Kosten-Nutzen-Analyse",
+            "Performance-Index": "4000 A | Performance Index | Neuer Versuchsaufbau",
+            "Heatmap": "Fehler-Heatmap",
+            "Boxplot": "Fehlerverteilung (Boxplot)",
+            "Pareto": "Pareto-Analyse",
+            "Radar": "Radar-Profil"
+        },
+        "eco_x": "Preis (\u20ac)",
+        "eco_y": [
+            "Fehler Nennstrom",
+            "Fehler Niederstrom",
+            "Fehler \u00dcberlast"
+        ],
+        "eco_type": "Performance-Index"
+    },
+    "dia_2000A_wandler_parallel": {
+        "current": [
+            2000.0
+        ],
+        "geos": [
+            "Parallel"
+        ],
+        "wandlers": [
+            "Celsa ALO 10030 1R35",
+            "Celsa ALO 8030 K 8R1",
+            "MBS ASK101.4 8R1",
+            "Redur 13A1030.3ffp 8R1"
+        ],
+        "duts": [
+            "Einspeisung",
+            "Pruefling"
+        ],
+        "comp_mode": "Messger\u00e4t (z.B. PAC1)",
+        "sync_axes": true,
+        "y_limit": 4.3,
+        "acc_class": 1.0,
+        "show_err_bars": false,
+        "custom_colors": {
+            "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "#d9772a",
+            "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "#2f6fb0",
+            "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "#4a8fd1"
+        },
+        "custom_legends": {
+            "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 8,1 \u03a9 | Parallel (2000A)",
+            "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | Pruefling | 1,35 \u03a9 | Parallel (2000A)",
+            "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | Pruefling | 8,1 \u03a9 | Parallel (2000A)"
+        },
+        "custom_titles": {
+            "Gesamt\u00fcbersicht (Tab 1)": "2000\u00a0A\u00a0| Fehlerkurve\u00a0| Wandler parallel",
+            "Scatter-Plot": "Kosten-Nutzen-Analyse",
+            "Performance-Index": "4000 A | Performance Index | Wandler parallel",
+            "Heatmap": "Fehler-Heatmap",
+            "Boxplot": "Fehlerverteilung (Boxplot)",
+            "Pareto": "Pareto-Analyse",
+            "Radar": "Radar-Profil"
+        },
+        "eco_x": "Preis (\u20ac)",
+        "eco_y": [
+            "Fehler Nennstrom",
+            "Fehler Niederstrom",
+            "Fehler \u00dcberlast"
+        ],
+        "eco_type": "Performance-Index"
+    },
+    "2025_12_04_1415-MBS-ASK101.4-2000A-8R1": {
+        "5": [
+            128,
+            688
+        ],
+        "20": [
+            761,
+            1321
+        ],
+        "50": [
+            0,
+            0
+        ],
+        "80": [
+            0,
+            0
+        ],
+        "90": [
+            0,
+            0
+        ],
+        "100": [
+            1787,
+            2347
+        ],
+        "120": [
+            2417,
+            2977
+        ]
+    },
+    "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1": {
+        "5": [
+            115,
+            675
+        ],
+        "20": [
+            740,
+            1300
+        ],
+        "50": [
+            0,
+            0
+        ],
+        "80": [
+            0,
+            0
+        ],
+        "90": [
+            0,
+            0
+        ],
+        "100": [
+            1760,
+            2320
+        ],
+        "120": [
+            2390,
+            2950
+        ]
+    },
+    "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1": {
+        "5": [
+            260,
+            820
+        ],
+        "20": [
+            928,
+            1488
+        ],
+        "50": [
+            0,
+            0
+        ],
+        "80": [
+            0,
+            0
+        ],
+        "90": [
+            0,
+            0
+        ],
+        "100": [
+            1583,
+            2143
+        ],
+        "120": [
+            2210,
+            2770
+        ]
+    },
+    "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0": {
+        "5": [
+            165,
+            725
+        ],
+        "20": [
+            806,
+            1366
+        ],
+        "50": [
+            0,
+            0
+        ],
+        "80": [
+            0,
+            0
+        ],
+        "90": [
+            0,
+            0
+        ],
+        "100": [
+            1440,
+            2000
+        ],
+        "120": [
+            2140,
+            2700
+        ]
+    },
+    "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35": {
+        "5": [
+            190,
+            750
+        ],
+        "20": [
+            828,
+            1388
+        ],
+        "50": [
+            0,
+            0
+        ],
+        "80": [
+            0,
+            0
+        ],
+        "90": [
+            0,
+            0
+        ],
+        "100": [
+            1690,
+            2250
+        ],
+        "120": [
+            2317,
+            2877
+        ]
+    },
+    "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8": {
+        "5": [
+            181,
+            741
+        ],
+        "20": [
+            810,
+            1370
+        ],
+        "50": [
+            1461,
+            2021
+        ],
+        "80": [
+            2096,
+            2656
+        ],
+        "90": [
+            2738,
+            3298
+        ],
+        "100": [
+            3373,
+            3933
+        ],
+        "120": [
+            4010,
+            4570
+        ]
+    },
+    "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8": {
+        "5": [
+            150,
+            710
+        ],
+        "20": [
+            770,
+            1330
+        ],
+        "50": [
+            1463,
+            2023
+        ],
+        "80": [
+            2097,
+            2657
+        ],
+        "90": [
+            2721,
+            3281
+        ],
+        "100": [
+            3347,
+            3907
+        ],
+        "120": [
+            3978,
+            4538
+        ]
+    },
+    "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0": {
+        "5": [
+            154,
+            714
+        ],
+        "20": [
+            796,
+            1356
+        ],
+        "50": [
+            1440,
+            2000
+        ],
+        "80": [
+            2090,
+            2650
+        ],
+        "90": [
+            2720,
+            3280
+        ],
+        "100": [
+            3330,
+            3890
+        ],
+        "120": [
+            3953,
+            4513
+        ]
+    },
+    "2025_12_10_1533-Celsa-ALO_10050_K-2500A-2R8": {
+        "5": [
+            262,
+            822
+        ],
+        "20": [
+            880,
+            1440
+        ],
+        "50": [
+            1500,
+            2060
+        ],
+        "80": [
+            2110,
+            2670
+        ],
+        "90": [
+            2757,
+            3317
+        ],
+        "100": [
+            3360,
+            3920
+        ],
+        "120": [
+            3976,
+            4536
+        ]
+    },
+    "2025_12_11_0812-Celsa-ALO_10030-2500A-1R35": {
+        "5": [
+            140,
+            700
+        ],
+        "20": [
+            750,
+            1310
+        ],
+        "50": [
+            1385,
+            1945
+        ],
+        "80": [
+            1997,
+            2557
+        ],
+        "90": [
+            2620,
+            3180
+        ],
+        "100": [
+            3229,
+            3789
+        ],
+        "120": [
+            3840,
+            4400
+        ]
+    },
+    "2025_12_11_1000-Celsa-ALO_12070-3000A-0R0": {
+        "5": [
+            109,
+            669
+        ],
+        "20": [
+            730,
+            1290
+        ],
+        "50": [
+            1370,
+            1930
+        ],
+        "80": [
+            1995,
+            2555
+        ],
+        "90": [
+            2589,
+            3149
+        ],
+        "100": [
+            3225,
+            3785
+        ],
+        "120": [
+            3846,
+            4406
+        ]
+    },
+    "2025_12_12_1406-Celsa-ALO_20060-5000A-0R0": {
+        "5": [
+            587,
+            1147
+        ],
+        "20": [
+            1218,
+            1778
+        ],
+        "50": [
+            1830,
+            2390
+        ],
+        "80": [
+            2477,
+            3037
+        ],
+        "90": [
+            3100,
+            3660
+        ],
+        "100": [
+            3700,
+            4260
+        ],
+        "120": [
+            4340,
+            4900
+        ]
+    },
+    "2025_12_15_0812-Celsa-ALO_E_16050_K-5000A-0R0": {
+        "5": [
+            210,
+            770
+        ],
+        "20": [
+            802,
+            1362
+        ],
+        "50": [
+            1470,
+            2030
+        ],
+        "80": [
+            2094,
+            2654
+        ],
+        "90": [
+            2730,
+            3290
+        ],
+        "100": [
+            3354,
+            3914
+        ],
+        "120": [
+            3981,
+            4541
+        ]
+    },
+    "2025_12_15_0912-Redur-20A1456.5vffp-5000A-0R0": {
+        "5": [
+            321,
+            881
+        ],
+        "20": [
+            925,
+            1485
+        ],
+        "50": [
+            1555,
+            2115
+        ],
+        "80": [
+            2185,
+            2745
+        ],
+        "90": [
+            2820,
+            3380
+        ],
+        "100": [
+            3440,
+            4000
+        ],
+        "120": [
+            4060,
+            4620
+        ]
+    },
+    "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0": {
+        "5": [
+            140,
+            700
+        ],
+        "20": [
+            774,
+            1334
+        ],
+        "50": [
+            1423,
+            1983
+        ],
+        "80": [
+            2050,
+            2610
+        ],
+        "90": [
+            2667,
+            3227
+        ],
+        "100": [
+            3298,
+            3858
+        ],
+        "120": [
+            3914,
+            4474
+        ]
+    },
+    "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0": {
+        "5": [
+            384,
+            944
+        ],
+        "20": [
+            1012,
+            1572
+        ],
+        "50": [
+            1629,
+            2189
+        ],
+        "80": [
+            2240,
+            2800
+        ],
+        "90": [
+            2870,
+            3430
+        ],
+        "100": [
+            3498,
+            4058
+        ],
+        "120": [
+            4101,
+            4661
+        ]
+    },
+    "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35": {
+        "5": [
+            170,
+            730
+        ],
+        "20": [
+            810,
+            1370
+        ],
+        "50": [
+            0,
+            0
+        ],
+        "80": [
+            0,
+            0
+        ],
+        "90": [
+            0,
+            0
+        ],
+        "100": [
+            1440,
+            2000
+        ],
+        "120": [
+            2110,
+            2670
+        ]
+    },
+    "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1": {
+        "5": [
+            280,
+            840
+        ],
+        "20": [
+            990,
+            1550
+        ],
+        "50": [
+            0,
+            0
+        ],
+        "80": [
+            0,
+            0
+        ],
+        "90": [
+            0,
+            0
+        ],
+        "100": [
+            1630,
+            2190
+        ],
+        "120": [
+            2273,
+            2833
+        ]
+    },
+    "2025_12_08_1121-MBS-ASK101.4-2000A-8R1": {
+        "5": [
+            102,
+            662
+        ],
+        "20": [
+            770,
+            1330
+        ],
+        "50": [
+            0,
+            0
+        ],
+        "80": [
+            0,
+            0
+        ],
+        "90": [
+            0,
+            0
+        ],
+        "100": [
+            1707,
+            2267
+        ],
+        "120": [
+            3267,
+            3827
+        ]
+    },
+    "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1": {
+        "5": [
+            130,
+            690
+        ],
+        "20": [
+            773,
+            1333
+        ],
+        "50": [
+            0,
+            0
+        ],
+        "80": [
+            0,
+            0
+        ],
+        "90": [
+            0,
+            0
+        ],
+        "100": [
+            1459,
+            2019
+        ],
+        "120": [
+            2370,
+            2930
+        ]
+    },
+    "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0": {
+        "5": [
+            628,
+            1188
+        ],
+        "20": [
+            1284,
+            1844
+        ],
+        "50": [
+            0,
+            0
+        ],
+        "80": [
+            0,
+            0
+        ],
+        "90": [
+            0,
+            0
+        ],
+        "100": [
+            1950,
+            2510
+        ],
+        "120": [
+            2590,
+            3150
+        ]
+    },
+    "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8": {
+        "5": [
+            287,
+            847
+        ],
+        "20": [
+            929,
+            1489
+        ],
+        "50": [
+            1880,
+            2440
+        ],
+        "80": [
+            2520,
+            3080
+        ],
+        "90": [
+            3170,
+            3730
+        ],
+        "100": [
+            3856,
+            4416
+        ],
+        "120": [
+            4490,
+            5050
+        ]
+    },
+    "2025_12_09_1332-Celsa-ALO_10050_K-2500A-2R8": {
+        "5": [
+            320,
+            880
+        ],
+        "20": [
+            940,
+            1500
+        ],
+        "50": [
+            1581,
+            2141
+        ],
+        "80": [
+            2314,
+            2874
+        ],
+        "90": [
+            2950,
+            3510
+        ],
+        "100": [
+            4261,
+            4821
+        ],
+        "120": [
+            4870,
+            5430
+        ]
+    },
+    "2025_12_09_1535-Celsa-ALO_10030-2500A-1R35": {
+        "5": [
+            314,
+            874
+        ],
+        "20": [
+            930,
+            1490
+        ],
+        "50": [
+            1568,
+            2128
+        ],
+        "80": [
+            2190,
+            2750
+        ],
+        "90": [
+            2812,
+            3372
+        ],
+        "100": [
+            3462,
+            4022
+        ],
+        "120": [
+            4070,
+            4630
+        ]
+    },
+    "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8": {
+        "5": [
+            120,
+            680
+        ],
+        "20": [
+            769,
+            1329
+        ],
+        "50": [
+            1390,
+            1950
+        ],
+        "80": [
+            2047,
+            2607
+        ],
+        "90": [
+            2665,
+            3225
+        ],
+        "100": [
+            3294,
+            3854
+        ],
+        "120": [
+            3930,
+            4490
+        ]
+    },
+    "2025_12_11_1500-Redur-20A1456.5vffp-5000A-8R1": {
+        "5": [
+            256,
+            816
+        ],
+        "20": [
+            896,
+            1456
+        ],
+        "50": [
+            1522,
+            2082
+        ],
+        "80": [
+            2173,
+            2733
+        ],
+        "90": [
+            2780,
+            3340
+        ],
+        "100": [
+            3401,
+            3961
+        ],
+        "120": [
+            4048,
+            4608
+        ]
+    },
+    "2025_12_12_0820-MBS-ASK129.10-5000A-10R8": {
+        "5": [
+            190,
+            750
+        ],
+        "20": [
+            850,
+            1410
+        ],
+        "50": [
+            1470,
+            2030
+        ],
+        "80": [
+            2118,
+            2678
+        ],
+        "90": [
+            2722,
+            3282
+        ],
+        "100": [
+            3356,
+            3916
+        ],
+        "120": [
+            3994,
+            4554
+        ]
+    },
+    "2025_12_12_1020-Celsa-ALO_E_16050_K-5000A-0R0": {
+        "5": [
+            152,
+            712
+        ],
+        "20": [
+            780,
+            1340
+        ],
+        "50": [
+            1397,
+            1957
+        ],
+        "80": [
+            2044,
+            2604
+        ],
+        "90": [
+            2671,
+            3231
+        ],
+        "100": [
+            3296,
+            3856
+        ],
+        "120": [
+            3927,
+            4487
+        ]
+    },
+    "2025_12_12_1206-Celsa-ALO_20060-5000A-0R0": {
+        "5": [
+            140,
+            700
+        ],
+        "20": [
+            760,
+            1320
+        ],
+        "50": [
+            1392,
+            1952
+        ],
+        "80": [
+            2028,
+            2588
+        ],
+        "90": [
+            2650,
+            3210
+        ],
+        "100": [
+            3279,
+            3839
+        ],
+        "120": [
+            3897,
+            4457
+        ]
+    },
+    "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0": {
+        "5": [
+            180,
+            740
+        ],
+        "20": [
+            811,
+            1371
+        ],
+        "50": [
+            1439,
+            1999
+        ],
+        "80": [
+            2071,
+            2631
+        ],
+        "90": [
+            2670,
+            3230
+        ],
+        "100": [
+            3291,
+            3851
+        ],
+        "120": [
+            3919,
+            4479
+        ]
+    },
+    "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0": {
+        "5": [
+            554,
+            1114
+        ],
+        "20": [
+            1171,
+            1731
+        ],
+        "50": [
+            1805,
+            2365
+        ],
+        "80": [
+            2426,
+            2986
+        ],
+        "90": [
+            3060,
+            3620
+        ],
+        "100": [
+            3678,
+            4238
+        ],
+        "120": [
+            4278,
+            4838
+        ]
+    },
+    "2025_12_11_0912-Celsa-ALO_10030-2500A-1R35": {
+        "5": [
+            128,
+            688
+        ],
+        "20": [
+            748,
+            1308
+        ],
+        "50": [
+            1376,
+            1936
+        ],
+        "80": [
+            2016,
+            2576
+        ],
+        "90": [
+            2626,
+            3186
+        ],
+        "100": [
+            3233,
+            3793
+        ],
+        "120": [
+            3847,
+            4407
+        ]
+    },
+    "2026_01_07-Messstrecke-4000A-0R0": {
+        "5": [
+            262,
+            822
+        ],
+        "20": [
+            885,
+            1445
+        ],
+        "50": [
+            1522,
+            2082
+        ],
+        "80": [
+            2163,
+            2723
+        ],
+        "90": [
+            2776,
+            3336
+        ],
+        "100": [
+            3389,
+            3949
+        ],
+        "120": [
+            3996,
+            4556
+        ]
+    }
+}
