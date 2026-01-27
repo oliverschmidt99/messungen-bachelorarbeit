@@ -598,13 +598,20 @@ df_curr = df[df["nennstrom"].isin(sel_currents)]
 available_geos = sorted(df_curr["Geometrie"].astype(str).unique())
 
 # Sanitize Geos
+# Sanitize Geos
 saved_geos = st.session_state.get("k_geos", available_geos)
 valid_geos = [g for g in saved_geos if g in available_geos]
+
+# Fallback: Falls die Auswahl leer ist oder ungültig wurde, nimm alles
 if not valid_geos and available_geos:
     valid_geos = available_geos
 
+# KORREKTUR 1: Den bereinigten Wert explizit in den Session State schreiben
+st.session_state["k_geos"] = valid_geos
+
+# KORREKTUR 2: Das 'default'-Argument entfernen (Streamlit nimmt jetzt den Wert aus dem Session State)
 sel_geos = st.sidebar.multiselect(
-    "2. Geometrie:", available_geos, default=valid_geos, key="k_geos"
+    "2. Geometrie:", available_geos, key="k_geos"
 )
 
 if not sel_geos:
@@ -620,10 +627,11 @@ valid_wandlers = [w for w in saved_wandlers if w in available_wandlers]
 if not valid_wandlers and available_wandlers:
     valid_wandlers = available_wandlers
 
+st.session_state["k_wandlers"] = valid_wandlers
+
 sel_wandlers = st.sidebar.multiselect(
     "3. Wandler / Messung:",
     available_wandlers,
-    default=valid_wandlers,
     key="k_wandlers",
 )
 
@@ -640,8 +648,10 @@ valid_duts = [d for d in saved_duts if d in available_duts]
 if not valid_duts and available_duts:
     valid_duts = available_duts
 
+st.session_state["k_duts"] = valid_duts
+
 sel_duts = st.sidebar.multiselect(
-    "4. Geräte (DUTs) auswählen:", available_duts, default=valid_duts, key="k_duts"
+    "4. Geräte (DUTs) auswählen:", available_duts,key="k_duts"
 )
 
 comp_options = ["Messgerät (z.B. PAC1)", "Nennwert (Ideal)"]
