@@ -1,6 +1,6 @@
-pandas 
+pandas>=2.0.0 
 numpy
 matplotlib
-plotly
-streamlit
+plotly>=5.0.0
+streamlit>=1.40.0
 pyarrow
