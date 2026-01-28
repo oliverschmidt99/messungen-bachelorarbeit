@@ -575,11 +575,11 @@
       "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "#FF0000",
       "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "#FF7100",
       "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "#008CFF",
-      "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "#FF00D4",
+      "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "#00a42f",
       "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "#FF7100",
       "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | Pruefling": "#FF0000",
       "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "#008CFF",
-      "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "#FF00D4"
+      "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "#00a42f"
     },
     "custom_legends": {
       "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "MBS ASK101.4 | PAC2 | 8,1 Ω | Parallel",
@@ -640,6 +640,109 @@
       "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | Pruefling": 12,
       "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": 12,
       "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": 12
+    },
+    "custom_titles": {
+      "Gesamtübersicht (Tab 1)": "2000 A | Fehlerkurve | Parallel",
+      "Scatter-Plot": "2000 A | Scatter-Plot | Kosten-Nutzen-Analyse",
+      "Performance-Index": "2000 A | Performance-Index | Ranking",
+      "Heatmap": "2000 A | Heatmap | Fehlerverteilung",
+      "Boxplot": "2000 A | Boxplot | Statistik",
+      "Pareto": "2000 A | Pareto | Fehler-Ursachen",
+      "Radar": "2000 A | Radar | Multi-Kriteriell"
+    },
+    "eco_x": "Volumen (dm³)",
+    "eco_y": [
+      "Fehler Nennstrom"
+    ],
+    "eco_type": "Scatter"
+  },
+  "dia_5000A_dreieck_parallel": {
+    "current": [
+      5000.0
+    ],
+    "geos": [
+      "Parallel",
+      "Dreieck"
+    ],
+    "wandlers": [
+      "Celsa ALO 20060 0R0",
+      "Celsa ALO E 16050 K 0R0",
+      "MBS ASK129.10 10R8",
+      "Redur 20A1456.5vffp 0R0",
+      "Redur 20A1456.5vffp 8R1"
+    ],
+    "duts": [
+      "Einspeisung",
+      "Pruefling"
+    ],
+    "comp_mode": "Messgerät (z.B. PAC1)",
+    "sync_axes": true,
+    "y_limit": 5.0,
+    "acc_class": 1.0,
+    "show_err_bars": true,
+    "bottom_plot_mode": "Ausblenden",
+    "custom_colors": {
+      "2025_12_15_0912-Redur-20A1456.5vffp-5000A-0R0_sortiert.csv | Pruefling": "#FF7100",
+      "2025_12_12_1406-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "#008CFF",
+      "2025_12_15_0812-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "#12b401",
+      "2025_12_12_1206-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "#008CFF",
+      "2025_12_12_1020-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "#12b401",
+      "2025_12_12_0820-MBS-ASK129.10-5000A-10R8_sortiert.csv | Pruefling": "#FF0000",
+      "2025_12_11_1500-Redur-20A1456.5vffp-5000A-8R1_sortiert.csv | Pruefling": "#FF7100"
+    },
+    "custom_legends": {
+      "2025_12_15_0912-Redur-20A1456.5vffp-5000A-0R0_sortiert.csv | Pruefling": "Redur 20A1456.5vffp | 5000 A | 0,0 Ω | Parallel",
+      "2025_12_12_1406-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 20060 | 5000 A | 0,0 Ω | Parallel",
+      "2025_12_15_0812-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO E 16050 K | 5000 A | 0,0 Ω | Parallel",
+      "2025_12_12_1206-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 20060 | 5000 A | 0,0 Ω | Dreieck",
+      "2025_12_12_1020-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO E 16050 K | 5000 A | 0,0 Ω | Dreieck",
+      "2025_12_12_0820-MBS-ASK129.10-5000A-10R8_sortiert.csv | Pruefling": "MBS ASK129.10 | 5000 A | 10,8 Ω | Dreieck",
+      "2025_12_11_1500-Redur-20A1456.5vffp-5000A-8R1_sortiert.csv | Pruefling": "Redur 20A1456.5vffp | 5000 A | 8,1 Ω | Dreieck"
+    },
+    "custom_styles": {
+      "2025_12_15_0912-Redur-20A1456.5vffp-5000A-0R0_sortiert.csv | Pruefling": "solid",
+      "2025_12_12_1406-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "solid",
+      "2025_12_15_0812-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "solid",
+      "2025_12_12_1206-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "dot",
+      "2025_12_12_1020-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "dot",
+      "2025_12_12_0820-MBS-ASK129.10-5000A-10R8_sortiert.csv | Pruefling": "dot",
+      "2025_12_11_1500-Redur-20A1456.5vffp-5000A-8R1_sortiert.csv | Pruefling": "dot"
+    },
+    "custom_symbols": {
+      "2025_12_15_0912-Redur-20A1456.5vffp-5000A-0R0_sortiert.csv | Pruefling": "circle",
+      "2025_12_12_1406-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "circle",
+      "2025_12_15_0812-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "circle",
+      "2025_12_12_1206-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "triangle-up",
+      "2025_12_12_1020-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "triangle-up",
+      "2025_12_12_0820-MBS-ASK129.10-5000A-10R8_sortiert.csv | Pruefling": "triangle-up",
+      "2025_12_11_1500-Redur-20A1456.5vffp-5000A-8R1_sortiert.csv | Pruefling": "triangle-up"
+    },
+    "custom_widths": {
+      "2025_12_15_0912-Redur-20A1456.5vffp-5000A-0R0_sortiert.csv | Pruefling": 1.0,
+      "2025_12_12_1406-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": 1.0,
+      "2025_12_15_0812-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": 1.0,
+      "2025_12_12_1206-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": 1.0,
+      "2025_12_12_1020-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": 1.0,
+      "2025_12_12_0820-MBS-ASK129.10-5000A-10R8_sortiert.csv | Pruefling": 1.0,
+      "2025_12_11_1500-Redur-20A1456.5vffp-5000A-8R1_sortiert.csv | Pruefling": 1.0
+    },
+    "custom_visible": {
+      "2025_12_15_0912-Redur-20A1456.5vffp-5000A-0R0_sortiert.csv | Pruefling": true,
+      "2025_12_12_1406-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": true,
+      "2025_12_15_0812-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": false,
+      "2025_12_12_1206-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": true,
+      "2025_12_12_1020-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": false,
+      "2025_12_12_0820-MBS-ASK129.10-5000A-10R8_sortiert.csv | Pruefling": true,
+      "2025_12_11_1500-Redur-20A1456.5vffp-5000A-8R1_sortiert.csv | Pruefling": true
+    },
+    "custom_sizes": {
+      "2025_12_15_0912-Redur-20A1456.5vffp-5000A-0R0_sortiert.csv | Pruefling": 8,
+      "2025_12_12_1406-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": 8,
+      "2025_12_15_0812-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": 8,
+      "2025_12_12_1206-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": 12,
+      "2025_12_12_1020-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": 12,
+      "2025_12_12_0820-MBS-ASK129.10-5000A-10R8_sortiert.csv | Pruefling": 12,
+      "2025_12_11_1500-Redur-20A1456.5vffp-5000A-8R1_sortiert.csv | Pruefling": 12
     },
     "custom_titles": {
       "Gesamtübersicht (Tab 1)": "2000 A | Fehlerkurve | Parallel",
