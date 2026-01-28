@@ -1530,8 +1530,11 @@ with tab1:
     st.plotly_chart(fig_main, use_container_width=True)
     st.session_state["fig_snapshot_tab1"] = fig_main
 
+
 with tab2:
-    st.markdown("### 💰 Preis/Leistung & Varianten-Vergleich")
+    st.markdown("### 💰 Ökonomische Analyse & Varianten-Vergleich")
+
+    # --- 1. DATEN AGGREGATION (Berechnung der KPIs) ---
     df_err = (
         df_sub.groupby("unique_id")
         .agg(
@@ -1573,8 +1576,31 @@ with tab2:
         )
         .reset_index()
     )
+    # Volumen berechnen
     df_err["volumen"] = (df_err["vol_t"] * df_err["vol_b"] * df_err["vol_h"]) / 1000.0
 
+    # Falls keine Daten da sind, abbrechen
+    if df_err.empty:
+        st.warning("Keine Daten für die aktuelle Auswahl verfügbar.")
+        st.stop()
+
+    # --- 2. KPI DASHBOARD ---
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    with kpi1:
+        st.metric("Anzahl Varianten", len(df_err))
+    with kpi2:
+        avg_price = df_err["preis"].replace(0, np.nan).mean()
+        st.metric("Ø Preis", f"{avg_price:.2f} €" if pd.notna(avg_price) else "-")
+    with kpi3:
+        best_acc = df_err["err_nom"].min()
+        st.metric("Bester Fehler (Nenn)", f"{best_acc:.3f} %")
+    with kpi4:
+        best_var = df_err.loc[df_err["err_nom"].idxmin()]["legend_name"]
+        st.metric("Genaueste Variante", best_var.split("|")[0][:15] + "...")
+
+    st.markdown("---")
+
+    # --- 3. KONFIGURATION ---
     Y_OPTIONS_MAP = {
         "Fehler Niederstrom": "err_nieder",
         "Fehler Nennstrom": "err_nom",
@@ -1587,11 +1613,11 @@ with tab2:
     }
     REVERSE_Y_MAP = {v: k for k, v in Y_OPTIONS_MAP.items()}
 
-    if not df_err.empty:
-        c1, c2, c3 = st.columns(3)
+    with st.expander("⚙️ Achsen & Metriken konfigurieren", expanded=True):
+        c1, c2 = st.columns(2)
         with c1:
             x_sel = st.selectbox(
-                "X-Achse:",
+                "X-Achse (für Scatter):",
                 ["Preis (€)", "Volumen (dm³)"],
                 index=0 if st.session_state.get("k_eco_x") == "Preis (€)" else 1,
                 key="k_eco_x",
@@ -1599,250 +1625,252 @@ with tab2:
             x_col = "preis" if "Preis" in x_sel else "volumen"
         with c2:
             y_selection = st.multiselect(
-                "Y-Achse:",
+                "Vergleichs-Metriken (Y-Achsen / Radar / Ranking):",
                 options=list(Y_OPTIONS_MAP.keys()),
                 default=st.session_state.get("k_eco_y", ["Fehler Nennstrom"]),
                 key="k_eco_y",
             )
             y_cols_selected = [Y_OPTIONS_MAP[label] for label in y_selection]
-        with c3:
-            types = [
-                "Scatter",
-                "Performance-Index",
-                "Heatmap",
-                "Boxplot",
-                "Pareto",
-                "Radar",
-            ]
-            try:
-                t_idx = types.index(st.session_state.get("k_eco_type", "Scatter"))
-            except:
-                t_idx = 0
-            chart_type = st.radio("Diagramm-Typ:", types, index=t_idx, key="k_eco_type")
 
-        color_map_dict = dict(zip(df_err["legend_name"], df_err["color_hex"]))
+    if not y_cols_selected:
+        st.error("Bitte mindestens eine Metrik auswählen.")
+        st.stop()
 
-        if not y_cols_selected:
-            st.warning("Bitte wähle mindestens einen Wert für die Y-Achse aus.")
-        else:
-            if chart_type == "Scatter":
-                title_str = TITLES_MAP.get("Scatter-Plot", f"{x_sel} vs. Auswahl")
-                df_long = df_err.melt(
-                    id_vars=["unique_id", "legend_name", x_col, "color_hex"],
-                    value_vars=y_cols_selected,
-                    var_name="Metrik_Intern",
-                    value_name="Wert",
-                )
-                df_long["Metrik"] = df_long["Metrik_Intern"].map(REVERSE_Y_MAP)
-                fig_eco = px.scatter(
-                    df_long,
-                    x=x_col,
-                    y="Wert",
-                    color="legend_name",
-                    symbol="Metrik",
-                    size=[15] * len(df_long),
-                    color_discrete_map=color_map_dict,
-                    title=title_str,
-                )
-                fig_eco.update_layout(
-                    legend=dict(
-                        orientation="h",
-                        y=-0.2,
-                        x=0.5,
-                        xanchor="center",
-                        font=dict(size=16),
-                    )
-                )
-                st.plotly_chart(fig_eco, use_container_width=True)
-                st.session_state["fig_snapshot_tab2"] = fig_eco
-                st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Scatter-Plot"
+    color_map_dict = dict(zip(df_err["legend_name"], df_err["color_hex"]))
 
-            elif chart_type == "Performance-Index":
-                title_str = TITLES_MAP.get("Performance-Index", "Performance Index")
-                norm_cols = []
-                df_err["total_score"] = 0.0
-                for label in y_selection:
-                    raw_col = Y_OPTIONS_MAP[label]
-                    mx_val = df_err[raw_col].abs().max()
-                    if mx_val == 0:
-                        mx_val = 1.0
-                    df_err[label] = (df_err[raw_col].abs() / mx_val) * 100
-                    df_err["total_score"] += df_err[label]
-                    norm_cols.append(label)
-                df_sorted = df_err.sort_values("total_score", ascending=True)
-                df_long = df_sorted.melt(
-                    id_vars=["legend_name"],
-                    value_vars=norm_cols,
-                    var_name="Kategorie",
-                    value_name="Normalisierter Anteil (%)",
-                )
-                fig_eco = px.bar(
-                    df_long,
-                    y="legend_name",
-                    x="Normalisierter Anteil (%)",
-                    color="Kategorie",
-                    orientation="h",
-                    title=title_str,
-                )
-                fig_eco.update_layout(
-                    yaxis=dict(autorange="reversed"),
-                    legend=dict(
-                        orientation="h",
-                        y=-0.2,
-                        x=0.5,
-                        xanchor="center",
-                        font=dict(size=16),
-                    ),
-                )
-                st.plotly_chart(fig_eco, use_container_width=True)
-                st.session_state["fig_snapshot_tab2"] = fig_eco
-                st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Performance-Index"
+    # --- STYLE DEFINITION FÜR ALLE LEGENDEN UNTEN ---
+    legend_layout_bottom = dict(
+        orientation="h",
+        y=-0.25,        # Position unterhalb der X-Achse
+        x=0.5,          # Zentriert
+        xanchor="center",
+        bgcolor="rgba(255,255,255,0.8)",
+        font=dict(size=14)
+    )
 
-            elif chart_type == "Heatmap":
-                title_str = TITLES_MAP.get("Heatmap", "Heatmap der Auswahl")
-                df_long = df_err.melt(
-                    id_vars=["legend_name"],
-                    value_vars=y_cols_selected,
-                    var_name="Kategorie_Intern",
-                    value_name="Wert",
-                )
-                df_long["Kategorie"] = df_long["Kategorie_Intern"].map(REVERSE_Y_MAP)
-                fig_eco = px.density_heatmap(
-                    df_long,
-                    x="legend_name",
-                    y="Kategorie",
-                    z="Wert",
-                    color_continuous_scale="Blues",
-                    title=title_str,
-                )
-                st.plotly_chart(fig_eco, use_container_width=True)
-                st.session_state["fig_snapshot_tab2"] = fig_eco
-                st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Performance-Index"
+    # --- 4. DIAGRAMM TABS ---
+    t_scat, t_bar, t_heat, t_box, t_par, t_rad = st.tabs([
+        "🔵 Scatter (Kosten/Nutzen)", 
+        "📊 Ranking (Index)", 
+        "🔥 Heatmap", 
+        "📦 Verteilung", 
+        "📉 Pareto", 
+        "🕸️ Radar"
+    ])
 
-            elif chart_type == "Boxplot":
-                title_str = TITLES_MAP.get(
-                    "Boxplot", f"Verteilung: {', '.join(y_selection)}"
-                )
-                df_long = df_err.melt(
-                    id_vars=["legend_name"],
-                    value_vars=y_cols_selected,
-                    var_name="Kategorie_Intern",
-                    value_name="Wert",
-                )
-                df_long["Kategorie"] = df_long["Kategorie_Intern"].map(REVERSE_Y_MAP)
-                fig_eco = px.box(
-                    df_long,
-                    x="legend_name",
-                    y="Wert",
-                    color="Kategorie",
-                    title=title_str,
-                )
-                fig_eco.update_layout(
-                    legend=dict(
-                        orientation="h",
-                        y=-0.2,
-                        x=0.5,
-                        xanchor="center",
-                        font=dict(size=16),
-                    )
-                )
-                st.plotly_chart(fig_eco, use_container_width=True)
-                st.session_state["fig_snapshot_tab2"] = fig_eco
-                st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Boxplot"
+    # --- TAB: SCATTER ---
+    with t_scat:
+        title_str = TITLES_MAP.get("Scatter-Plot", f"{x_sel} vs. Auswahl")
+        df_long = df_err.melt(
+            id_vars=["unique_id", "legend_name", x_col, "color_hex"],
+            value_vars=y_cols_selected,
+            var_name="Metrik_Intern",
+            value_name="Wert",
+        )
+        df_long["Metrik"] = df_long["Metrik_Intern"].map(REVERSE_Y_MAP)
+        
+        fig_eco = px.scatter(
+            df_long,
+            x=x_col,
+            y="Wert",
+            color="legend_name",
+            symbol="Metrik",
+            size=[15] * len(df_long),
+            color_discrete_map=color_map_dict,
+            title=title_str,
+            hover_data=["legend_name", "Wert"]
+        )
+        fig_eco.update_layout(legend=legend_layout_bottom) # LEGENDE UNTEN
+        st.plotly_chart(fig_eco, use_container_width=True)
+        
+        st.session_state["fig_snapshot_tab2"] = fig_eco
+        st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Scatter-Plot"
 
-            elif chart_type == "Pareto":
-                title_str = TITLES_MAP.get("Pareto", "Pareto-Analyse")
-                target_y = y_cols_selected[0]
-                target_label = y_selection[0]
-                df_sorted = df_err.sort_values(by=target_y, ascending=False)
-                df_sorted["cum_pct"] = (
-                    df_sorted[target_y].cumsum() / df_sorted[target_y].sum() * 100
-                )
-                fig_par = make_subplots(specs=[[{"secondary_y": True}]])
-                fig_par.add_trace(
-                    go.Bar(
-                        x=df_sorted["legend_name"],
-                        y=df_sorted[target_y],
-                        name=target_label,
-                        marker_color=df_sorted["color_hex"],
-                    ),
-                    secondary_y=False,
-                )
-                fig_par.add_trace(
-                    go.Scatter(
-                        x=df_sorted["legend_name"],
-                        y=df_sorted["cum_pct"],
-                        name="Kumulativ %",
-                        mode="lines+markers",
-                        line=dict(color="red"),
-                    ),
-                    secondary_y=True,
-                )
-                fig_par.update_layout(
-                    title=title_str,
-                    legend=dict(
-                        orientation="h",
-                        y=-0.2,
-                        x=0.5,
-                        xanchor="center",
-                        font=dict(size=16),
-                    ),
-                )
-                st.plotly_chart(fig_par, use_container_width=True)
-                st.session_state["fig_snapshot_tab2"] = fig_par
-                st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Pareto"
+    # --- TAB: RANKING (PERFORMANCE INDEX) ---
+    with t_bar:
+        title_str = TITLES_MAP.get("Performance-Index", "Performance Index (Niedriger ist besser)")
+        norm_cols = []
+        df_err["total_score"] = 0.0
+        
+        for label in y_selection:
+            raw_col = Y_OPTIONS_MAP[label]
+            mx_val = df_err[raw_col].abs().max()
+            if mx_val == 0: mx_val = 1.0
+            
+            df_err[label] = (df_err[raw_col].abs() / mx_val) * 100
+            df_err["total_score"] += df_err[label]
+            norm_cols.append(label)
+            
+        df_sorted = df_err.sort_values("total_score", ascending=True)
+        df_long = df_sorted.melt(
+            id_vars=["legend_name"],
+            value_vars=norm_cols,
+            var_name="Kategorie",
+            value_name="Anteil am Score (%)",
+        )
+        
+        fig_eco = px.bar(
+            df_long,
+            y="legend_name",
+            x="Anteil am Score (%)",
+            color="Kategorie",
+            orientation="h",
+            title=title_str,
+        )
+        fig_eco.update_layout(
+            yaxis=dict(autorange="reversed"),
+            legend=legend_layout_bottom # LEGENDE UNTEN
+        )
+        st.plotly_chart(fig_eco, use_container_width=True)
+        
+        st.session_state["fig_snapshot_tab2"] = fig_eco
+        st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Performance-Index"
 
-            elif chart_type == "Radar":
-                title_str = TITLES_MAP.get("Radar", "Radar-Vergleich")
-                fig_r = go.Figure()
-                categories = y_selection
-                max_vals = {}
-                for col_name in y_cols_selected:
-                    m = df_err[col_name].max()
-                    max_vals[col_name] = m if m != 0 else 1
-                for i, row in df_err.iterrows():
-                    r_vals = []
-                    for col_name in y_cols_selected:
-                        val = row[col_name]
-                        norm_val = val / max_vals[col_name]
-                        r_vals.append(norm_val)
-                    r_vals.append(r_vals[0])
-                    theta_vals = categories + [categories[0]]
-                    fig_r.add_trace(
-                        go.Scatterpolar(
-                            r=r_vals,
-                            theta=theta_vals,
-                            fill="toself",
-                            name=row["legend_name"],
-                            line_color=row["color_hex"],
-                        )
-                    )
-                fig_r.update_layout(
-                    polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
-                    title=title_str,
-                    legend=dict(
-                        orientation="h",
-                        y=-0.2,
-                        x=0.5,
-                        xanchor="center",
-                        font=dict(size=16),
-                    ),
+    # --- TAB: HEATMAP ---
+    with t_heat:
+        title_str = TITLES_MAP.get("Heatmap", "Werte-Heatmap")
+        df_long = df_err.melt(
+            id_vars=["legend_name"],
+            value_vars=y_cols_selected,
+            var_name="Kategorie_Intern",
+            value_name="Wert",
+        )
+        df_long["Kategorie"] = df_long["Kategorie_Intern"].map(REVERSE_Y_MAP)
+        
+        fig_eco = px.density_heatmap(
+            df_long,
+            x="legend_name",
+            y="Kategorie",
+            z="Wert",
+            text_auto=True,
+            color_continuous_scale="Blues",
+            title=title_str,
+        )
+        # Heatmap hat Colorbar, keine Legende. Wir lassen sie rechts,
+        # passen aber die X-Achsen Labels an.
+        fig_eco.update_layout(xaxis=dict(tickangle=45))
+        st.plotly_chart(fig_eco, use_container_width=True)
+        
+        st.session_state["fig_snapshot_tab2"] = fig_eco
+        st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Heatmap"
+
+    # --- TAB: BOXPLOT ---
+    with t_box:
+        title_str = TITLES_MAP.get("Boxplot", f"Verteilung: {', '.join(y_selection)}")
+        df_long = df_err.melt(
+            id_vars=["legend_name"],
+            value_vars=y_cols_selected,
+            var_name="Kategorie_Intern",
+            value_name="Wert",
+        )
+        df_long["Kategorie"] = df_long["Kategorie_Intern"].map(REVERSE_Y_MAP)
+        
+        fig_eco = px.box(
+            df_long,
+            x="legend_name",
+            y="Wert",
+            color="Kategorie",
+            title=title_str,
+        )
+        fig_eco.update_layout(legend=legend_layout_bottom) # LEGENDE UNTEN
+        st.plotly_chart(fig_eco, use_container_width=True)
+        
+        st.session_state["fig_snapshot_tab2"] = fig_eco
+        st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Boxplot"
+
+    # --- TAB: PARETO ---
+    with t_par:
+        title_str = TITLES_MAP.get("Pareto", "Pareto-Analyse (Einflussfaktoren)")
+        target_y = y_cols_selected[0]
+        target_label = y_selection[0]
+        
+        df_sorted = df_err.sort_values(by=target_y, ascending=False)
+        df_sorted["cum_pct"] = (df_sorted[target_y].cumsum() / df_sorted[target_y].sum() * 100)
+        
+        fig_par = make_subplots(specs=[[{"secondary_y": True}]])
+        fig_par.add_trace(
+            go.Bar(
+                x=df_sorted["legend_name"],
+                y=df_sorted[target_y],
+                name=target_label,
+                marker_color=df_sorted["color_hex"],
+            ),
+            secondary_y=False,
+        )
+        fig_par.add_trace(
+            go.Scatter(
+                x=df_sorted["legend_name"],
+                y=df_sorted["cum_pct"],
+                name="Kumulativ %",
+                mode="lines+markers",
+                line=dict(color="red", width=2),
+            ),
+            secondary_y=True,
+        )
+        fig_par.update_layout(title=title_str, legend=legend_layout_bottom) # LEGENDE UNTEN
+        st.plotly_chart(fig_par, use_container_width=True)
+        
+        st.session_state["fig_snapshot_tab2"] = fig_par
+        st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Pareto"
+
+    # --- TAB: RADAR ---
+    with t_rad:
+        title_str = TITLES_MAP.get("Radar", "Multi-Kriterieller Radar")
+        fig_r = go.Figure()
+        categories = y_selection
+        
+        max_vals = {}
+        for col_name in y_cols_selected:
+            m = df_err[col_name].max()
+            max_vals[col_name] = m if m != 0 else 1
+            
+        for i, row in df_err.iterrows():
+            r_vals = []
+            for col_name in y_cols_selected:
+                val = row[col_name]
+                norm_val = val / max_vals[col_name]
+                r_vals.append(norm_val)
+            r_vals.append(r_vals[0])
+            theta_vals = categories + [categories[0]]
+            
+            fig_r.add_trace(
+                go.Scatterpolar(
+                    r=r_vals,
+                    theta=theta_vals,
+                    fill="toself",
+                    name=row["legend_name"],
+                    line_color=row["color_hex"],
                 )
-                st.plotly_chart(fig_r, use_container_width=True)
-                st.session_state["fig_snapshot_tab2"] = fig_r
-                st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Radar"
+            )
+        fig_r.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+            title=title_str,
+            legend=legend_layout_bottom # LEGENDE UNTEN
+        )
+        st.plotly_chart(fig_r, use_container_width=True)
+        
+        st.session_state["fig_snapshot_tab2"] = fig_r
+        st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Radar"
+
+    # --- UNTERER BEREICH: DATENTABELLE ---
+    with st.expander("🔢 Detaillierte Datentabelle ansehen"):
+        st.dataframe(
+            df_err.drop(columns=["color_hex", "vol_t", "vol_b", "vol_h", "wandler_key"]), 
+            use_container_width=True
+        )
 
 with tab3:
     st.markdown("### ⚙️ Stammdaten pro Messdatei")
 
     col_info, col_btn = st.columns([2, 1])
     with col_info:
-        st.info("Die Datenbank ist die Hauptquelle.")
+        st.info("Die Datenbank ist die Hauptquelle für Hersteller, Modell & Geometrie.")
     with col_btn:
         if st.button(
             "🔄 Infos aus Dateinamen neu einlesen",
             type="secondary",
             use_container_width=True,
+            help="Überschreibt Hersteller/Modell basierend auf dem Dateinamen",
         ):
             src_col = "raw_file" if "raw_file" in df.columns else "wandler_key"
             new_meta = df[src_col].apply(parse_filename_info)
@@ -1852,20 +1880,28 @@ with tab3:
             df["nennstrom"] = new_meta["nennstrom"]
             df["Mess-Bürde"] = new_meta["Mess-Bürde"]
             if save_db(df):
-                st.success("Aktualisiert!")
+                st.success("Datenbank aus Dateinamen aktualisiert!")
                 st.rerun()
 
-    # --- CHECKBOX FÜR ALLE DATEIEN ---
-    show_all_files = st.checkbox(
-        "Alle Dateien der gewählten Nennströme anzeigen (ignoriert Filter für Geometrie/Wandler/DUT)",
-        value=True,
+    st.markdown("---")
+
+    # --- HIER IST DIE ÄNDERUNG ---
+    # Checkbox lädt nun wirklich ALLES (df), nicht nur den ausgewählten Strom
+    load_full_db = st.checkbox(
+        "📋 Alle Messreihen der gesamten Datenbank laden (ignoriert alle Filter)",
+        value=False,
     )
 
-    if show_all_files:
-        df_editor_source = df[df["nennstrom"].isin(sel_currents)].copy()
+    if load_full_db:
+        # Zeige ALLE Daten der Datenbank (df)
+        df_editor_source = df.copy()
+        st.caption(f"Zeige alle {len(df_editor_source['raw_file'].unique())} Dateien in der Datenbank.")
     else:
+        # Zeige nur die aktuell gefilterten Daten (df_sub)
         df_editor_source = df_sub.copy()
+        st.caption(f"Zeige {len(df_editor_source['raw_file'].unique())} Dateien (basierend auf Sidebar-Filter).")
 
+    # Vorbereitung der Tabelle (Duplikate entfernen, da DB pro Messpunkt speichert)
     df_editor_view = (
         df_editor_source[META_COLS]
         .drop_duplicates(subset=["raw_file"])
@@ -1877,14 +1913,16 @@ with tab3:
         column_config={"raw_file": st.column_config.TextColumn(disabled=True)},
         hide_index=True,
         key="specs_editor",
-        num_rows="dynamic"
+        num_rows="dynamic",  # Erlaubt Einfügen neuer Zeilen
+        use_container_width=True
     )
 
-    if st.button("💾 Änderungen speichern", type="primary"):
+    if st.button("💾 Änderungen in DB speichern", type="primary"):
         changes = edited_df.to_dict(orient="index")
         df_to_save = df.copy()
         count = 0
 
+        # Wir iterieren durch die Änderungen und wenden sie auf die Haupt-DB an
         for fname, attrs in changes.items():
             mask = df_to_save["raw_file"] == str(fname).strip()
             if mask.any():
@@ -1895,15 +1933,20 @@ with tab3:
 
         if count > 0:
             save_db(df_to_save)
-            st.success(f"✅ {count} Dateien gespeichert!")
+            st.toast(f"{count} Dateien erfolgreich aktualisiert!", icon="✅")
+            # Kurze Pause damit Toast sichtbar bleibt, dann Reload für Tabellen-Update
+            import time
+            time.sleep(1)
             st.rerun()
         else:
-            st.warning("Keine Übereinstimmung gefunden.")
+            st.warning("Keine übereinstimmenden Dateien zum Aktualisieren gefunden.")
 
-# --- TAB 4: SELECTOR (MIT NEUER SPEICHERLOGIK) ---
+# --- TAB 4: SELECTOR (DESIGN UPDATE) ---
 with tab4:
     st.markdown("### ✂️ Manueller Rohdaten-Export")
     TARGET_LEVELS_T4 = [5, 20, 50, 80, 90, 100, 120]
+    
+    # Session State initialisieren
     for level in TARGET_LEVELS_T4:
         if f"s_{level}" not in st.session_state:
             st.session_state[f"s_{level}"] = 0
@@ -1914,6 +1957,7 @@ with tab4:
     all_files_t4 = get_files_tab4()
     df_status_t4 = load_status_tracking()
 
+    # --- LINKE SPALTE: DATEI-NAVI ---
     with col_sel_nav:
         st.markdown("#### 📂 Dateiauswahl")
         files_options = []
@@ -1976,21 +2020,25 @@ with tab4:
             "Datei:", files_options, key="t4_file_sel", on_change=on_change_file
         )
         sel_file_path = file_map[sel_file_disp]
+        
         c_prev, c_next = st.columns(2)
-        c_prev.button("⬅️ Zurück", key="btn_prev", on_click=nav_callback, args=("prev",))
-        c_next.button("Weiter ➡️", key="btn_next", on_click=nav_callback, args=("next",))
+        c_prev.button("⬅️ Zurück", key="btn_prev", on_click=nav_callback, args=("prev",), use_container_width=True)
+        c_next.button("Weiter ➡️", key="btn_next", on_click=nav_callback, args=("next",), use_container_width=True)
+        
+        st.markdown("---")
         st.button(
-            "⏩ Nächste Offene",
-            type="primary",
+            "⏩ Nächste Offene suchen",
+            type="secondary",
             use_container_width=True,
             on_click=next_open_callback,
         )
 
+    # --- RECHTE SPALTE: HAUPTBEREICH ---
     with col_sel_main:
         if sel_file_path:
             clean_name_base, detected_nennstrom = extract_metadata(sel_file_path)
 
-            # --- LOAD TIMES (NESTED) ---
+            # Zeiten laden
             all_times = load_time_configs()
             saved_times = all_times.get(clean_name_base, {})
             config_found = bool(saved_times)
@@ -2011,45 +2059,42 @@ with tab4:
                             st.session_state[f"e_{lvl}"] = vals[1]
 
             detected = load_file_preview_tab4(sel_file_path)
-            c_inf1, c_inf2 = st.columns([3, 1])
-            with c_inf1:
-                st.subheader(clean_name_base)
-                if config_found:
-                    st.caption("✅ Zeiten aus Config geladen")
-                else:
-                    st.caption("❌ Keine gespeicherten Zeiten")
-            with c_inf2:
-                nennstrom_t4 = st.number_input(
-                    "Nennstrom:",
-                    value=float(detected_nennstrom),
-                    key=f"ns_{clean_name_base}",
-                )
-
-            t_idx, full_data_t4 = load_all_data_tab4(sel_file_path, detected)
-
-            if t_idx:
-                c_tool1, c_tool2 = st.columns([2, 1])
-                with c_tool1:
-                    sel_ref_dev = st.selectbox(
-                        "Referenz-Gerät (L1):", detected, key="ref_dev_t4"
+            
+            # Header Bereich mit Datei-Infos
+            with st.container(border=True):
+                c_inf1, c_inf2, c_inf3 = st.columns([3, 1, 1])
+                with c_inf1:
+                    st.markdown(f"**Datei:** `{clean_name_base}`")
+                    if config_found:
+                        st.caption("✅ Zeiten aus Config geladen")
+                    else:
+                        st.caption("❌ Keine gespeicherten Zeiten")
+                with c_inf2:
+                    nennstrom_t4 = st.number_input(
+                        "Nennstrom (A):",
+                        value=float(detected_nennstrom),
+                        key=f"ns_{clean_name_base}",
                     )
-                with c_tool2:
-                    if st.button("🔄 Config neu laden"):
+                with c_inf3:
+                     if st.button("🔄 Reset Zeiten", use_container_width=True):
+                        # Reload logic embedded in button
                         fresh_times = load_time_configs()
                         fresh_specific = fresh_times.get(clean_name_base, {})
                         if fresh_specific:
                             for lvl_str, vals in fresh_specific.items():
                                 if lvl_str.isdigit():
                                     lvl = int(lvl_str)
-                                    if (
-                                        lvl in TARGET_LEVELS_T4
-                                        and isinstance(vals, list)
-                                        and len(vals) == 2
-                                    ):
+                                    if lvl in TARGET_LEVELS_T4 and isinstance(vals, list) and len(vals) == 2:
                                         st.session_state[f"s_{lvl}"] = vals[0]
                                         st.session_state[f"e_{lvl}"] = vals[1]
                             st.rerun()
 
+            t_idx, full_data_t4 = load_all_data_tab4(sel_file_path, detected)
+
+            if t_idx:
+                # Plot Bereich
+                sel_ref_dev = st.selectbox("Referenz-Gerät für Vorschau (L1):", detected, key="ref_dev_t4")
+                
                 ref_l1 = full_data_t4[sel_ref_dev]["L1"]
                 if ref_l1 is not None:
                     fig_sel = go.Figure()
@@ -2059,12 +2104,13 @@ with tab4:
                             x=t_idx,
                             y=pct_val,
                             name=f"{sel_ref_dev} L1 %",
-                            line=dict(color="orange"),
+                            line=dict(color="#1f77b4", width=1),
                         )
                     )
+                    # Markiere Bereiche
                     for level in TARGET_LEVELS_T4:
                         fig_sel.add_hline(
-                            y=level, line_dash="dot", line_color="gray", opacity=0.5
+                            y=level, line_dash="dot", line_color="gray", opacity=0.3
                         )
                         s = st.session_state[f"s_{level}"]
                         e = st.session_state[f"e_{level}"]
@@ -2072,7 +2118,7 @@ with tab4:
                             fig_sel.add_vrect(
                                 x0=s,
                                 x1=e,
-                                fillcolor="rgba(0,200,100,0.2)",
+                                fillcolor="rgba(46, 204, 113, 0.2)",
                                 line_width=0,
                             )
                             fig_sel.add_annotation(
@@ -2080,59 +2126,75 @@ with tab4:
                                 y=level + 5,
                                 text=f"<b>{level}%</b>",
                                 showarrow=False,
-                                font=dict(color="green"),
+                                font=dict(color="green", size=10),
                             )
                     fig_sel.update_layout(
-                        height=400,
-                        margin=dict(t=30, b=0, l=0, r=0),
+                        height=350,
+                        margin=dict(t=10, b=10, l=10, r=10),
                         yaxis_title="Last %",
+                        xaxis_title="Datenpunkte",
+                        template="plotly_white"
                     )
                     st.plotly_chart(fig_sel, use_container_width=True)
 
-                st.markdown("##### Bereiche definieren")
-                batches = [
-                    TARGET_LEVELS_T4[i : i + 4]
-                    for i in range(0, len(TARGET_LEVELS_T4), 4)
-                ]
-                for batch in batches:
-                    c_h = st.columns(4)
-                    for i, l in enumerate(batch):
-                        c_h[i].markdown(f"**{l}%**")
-                    c_e = st.columns(4)
-                    for i, l in enumerate(batch):
-                        st.number_input(
-                            "Ende",
-                            key=f"e_{l}",
-                            on_change=update_start_callback,
-                            args=(l,),
-                            label_visibility="collapsed",
-                        )
-                        # Manuell platzieren schwierig in Loop, besser c_e[i] aber das war im alten code
-                        # Hier kurz gehalten.
-                    c_s = st.columns(4)
-                    for i, l in enumerate(batch):
-                        st.number_input(
-                            "Start", key=f"s_{l}", label_visibility="collapsed"
-                        )
+                st.markdown("##### 🎯 Bereiche definieren")
+                
+                # --- NEUES LAYOUT: GRID ---
+                # Wir erstellen 4 Spalten für die Eingabefelder
+                grid_cols = st.columns(4)
+                
+                for i, level in enumerate(TARGET_LEVELS_T4):
+                    # Spalte auswählen (Index modulo 4)
+                    col = grid_cols[i % 4]
+                    
+                    with col:
+                        # Container für bessere Optik (Rahmen um jedes Level)
+                        with st.container(border=True):
+                            st.markdown(f"**Stufe {level}%**")
+                            
+                            # Start und Ende nebeneinander in diesem kleinen Container
+                            c_start, c_end = st.columns(2)
+                            
+                            with c_start:
+                                st.number_input(
+                                    "Start", 
+                                    key=f"s_{level}", 
+                                    min_value=0,
+                                    label_visibility="collapsed" # Label ausblenden, Platz sparen
+                                )
+                                st.caption("Start") # Kleines Label drunter
+                                
+                            with c_end:
+                                st.number_input(
+                                    "Ende", 
+                                    key=f"e_{level}", 
+                                    min_value=0,
+                                    on_change=update_start_callback, 
+                                    args=(level,), 
+                                    label_visibility="collapsed"
+                                )
+                                st.caption("Ende")
 
-                # Export Controls
+                st.divider()
+
+                # Footer: Export Controls
                 c_exp1, c_exp2, c_exp3 = st.columns([2, 1, 1])
                 with c_exp1:
                     exp_devs = st.multiselect(
-                        "Export Geräte:", detected, default=detected
+                        "Geräte exportieren:", detected, default=detected
                     )
                 with c_exp2:
-                    skip_n = st.number_input("Einschwingen Skip:", value=0)
+                    skip_n = st.number_input("Einschwing-Skip:", value=0, help="Punkte am Anfang des Bereichs ignorieren")
                 with c_exp3:
-                    stat_opt = st.radio("Status:", ["OK", "Problem"], horizontal=True)
+                    stat_opt = st.radio("Status setzen:", ["OK", "Problem"], horizontal=True)
 
                 if st.button(
-                    "🚀 Speichern & Exportieren",
+                    "💾 Speichern & CSV Exportieren",
                     type="primary",
                     use_container_width=True,
                 ):
                     if not exp_devs:
-                        st.error("Keine Geräte gewählt.")
+                        st.error("Bitte mindestens ein Gerät auswählen.")
                     else:
                         semap = {}
                         for l in TARGET_LEVELS_T4:
@@ -2152,7 +2214,9 @@ with tab4:
                         if out:
                             s_code = "WARNING" if stat_opt == "Problem" else "OK"
                             save_tracking_status(clean_name_base, s_code)
-                            st.success(f"Gespeichert: {out}")
+                            st.toast(f"Gespeichert: {os.path.basename(out)}", icon="✅")
+                            # Success Message kurz anzeigen
+                            st.success("Daten wurden exportiert und Zeiten gespeichert.")
 
 # --- TAB 5: DB AGGREGATOR ---
 with tab5:
