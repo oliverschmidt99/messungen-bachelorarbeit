@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "cwd": "/home/olli/Insync/oliverlucaschmidt@gmail.com/Google Drive/7_Bachelorarbeit/02_Zuhause/Bachelorarbeit-Fremdfeldbeeinflussung-Messstromwandler/03_Ressourcen/messungen",
+      "program": "/home/olli/Insync/oliverlucaschmidt@gmail.com/Google Drive/7_Bachelorarbeit/02_Zuhause/Bachelorarbeit-Fremdfeldbeeinflussung-Messstromwandler/03_Ressourcen/messungen/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}
