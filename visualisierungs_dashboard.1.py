@@ -9,9 +9,6 @@ import zipfile
 import subprocess
 import re
 import json
-import numpy as np
-from pathlib import Path
-import glob
 
 # --- KONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,21 +17,20 @@ DATA_DIR = os.path.join(BASE_DIR, "daten")  # Verweis auf Unterordner
 DATA_FILE = os.path.join(DATA_DIR, "messdaten_db.parquet")
 
 # NEU: Intelligente Suche nach der Config-Datei
+# Prüft Reihenfolge: daten/saved_config.json -> root/saved_config.json -> daten/saved_configs.json
 possible_configs = [
     os.path.join(DATA_DIR, "saved_config.json"),
     os.path.join(BASE_DIR, "saved_config.json"),
-    os.path.join(DATA_DIR, "saved_configs.json"),
+    os.path.join(DATA_DIR, "saved_configs.json")
 ]
 
-CONFIG_FILE = os.path.join(DATA_DIR, "saved_configs.json")  # Standard-Fallback
+CONFIG_FILE = os.path.join(DATA_DIR, "saved_configs.json") # Standard-Fallback
 for f in possible_configs:
     if os.path.exists(f):
         CONFIG_FILE = f
         break
 
 WORK_DIR = os.path.join(BASE_DIR, "matlab_working_dir")
-
-DEFAULT_MATLAB_PATH = r"C:\Program Files\MATLAB\R2025a\bin\matlab.exe"
 
 PHASES = ["L1", "L2", "L3"]
 ZONES = {
@@ -384,7 +380,6 @@ def create_single_phase_figure(
         # X-Achsen-Label an Row 1, da Row 2 nicht existiert
         fig.update_xaxes(title_text="Strom [% In]", row=1, col=1)
 
-    # Hier wenden wir die Slider-Werte auf alle Unterdiagramme an
     fig.update_xaxes(nticks=nticks_x)
     fig.update_yaxes(nticks=nticks_y)
 
@@ -457,7 +452,7 @@ exit(0);
 """
 
 # ==========================================
-# --- HELPER FÜR TAB 4 & 5 (ROHDATEN & AGGREGATION) ---
+# --- HELPER FÜR TAB 4 (ROHDATEN SELECTOR) ---
 # ==========================================
 SELECTOR_TRACKING_CSV = os.path.join(DATA_DIR, "manuelle_ergebnisse.csv")
 
@@ -705,171 +700,6 @@ def save_sorted_raw_data_tab4(
         return str(output_path)
     except Exception as e:
         return None
-
-
-# --- AGGREGATION HELPER (TAB 5) ---
-def aggregator_load_metadata(db_path, keep_cols):
-    """Lädt Metadaten aus der existierenden DB, um sie nicht zu überschreiben"""
-    if not os.path.exists(db_path):
-        return {}
-    try:
-        df_old = pd.read_parquet(db_path)
-        meta_dict = {}
-        if "raw_file" not in df_old.columns:
-            return {}
-
-        for file_name in df_old["raw_file"].unique():
-            row = df_old[df_old["raw_file"] == file_name].iloc[0]
-            file_meta = {}
-            for col in keep_cols:
-                if col in df_old.columns:
-                    val = row[col]
-                    if pd.notna(val) and val != 0 and val != "" and val != "Unbekannt":
-                        file_meta[col] = val
-            if file_meta:
-                meta_dict[file_name] = file_meta
-        return meta_dict
-    except:
-        return {}
-
-
-def aggregator_extract_metadata(filepath):
-    filename = os.path.basename(filepath)
-    original_name = filename.replace("_sortiert.csv", "")
-    folder_name = os.path.basename(os.path.dirname(filepath))
-
-    match_amp = re.search(r"[-_](\d+)A[-_]", original_name)
-    nennstrom = float(match_amp.group(1)) if match_amp else 0.0
-
-    lower_name = original_name.lower()
-    if "messstrecke" in lower_name:
-        manufacturer = "Messstrecke"
-    elif "mbs" in lower_name:
-        manufacturer = "MBS"
-    elif "celsa" in lower_name:
-        manufacturer = "Celsa"
-    elif "redur" in lower_name:
-        manufacturer = "Redur"
-    else:
-        manufacturer = "Andere"
-
-    wandler_key = f"{manufacturer} {original_name}"
-
-    return {
-        "filepath": filepath,
-        "folder": folder_name,
-        "hersteller_auto": manufacturer,
-        "nennstrom": nennstrom,
-        "wandler_key": wandler_key,
-        "dateiname": filename,
-        "original_name_clean": original_name,
-    }
-
-
-def aggregator_analyze_file(filepath, meta, target_levels, phases, ref_keywords):
-    try:
-        df = pd.read_csv(filepath, sep=";")
-        if len(df.columns) < 2:
-            df = pd.read_csv(filepath, sep=",")
-    except:
-        return [], "Lesefehler"
-
-    df.columns = [c.strip() for c in df.columns]
-    value_cols = [c for c in df.columns if "_I" in c]
-    if not value_cols:
-        return [], "Keine Strom-Daten"
-
-    results = []
-    for level in target_levels:
-        lvl_str = f"{level:02d}"
-        nominal_amp = meta["nennstrom"] * (level / 100.0)
-
-        for phase in phases:
-            relevant_cols = [
-                c for c in value_cols if c.startswith(f"{lvl_str}_{phase}")
-            ]
-            if not relevant_cols:
-                continue
-
-            devices_map = {}
-            for col in relevant_cols:
-                # Regex adaptation for both formats: 05_L1_I_Gerät vs 05_L1_Gerät_I
-                m1 = re.search(rf"{lvl_str}_{phase}_I_(.+)$", col)
-                m2 = re.search(rf"{lvl_str}_{phase}_(.+)_I$", col)
-                if m1:
-                    devices_map[m1.group(1)] = col
-                elif m2:
-                    devices_map[m2.group(1)] = col
-
-            if not devices_map:
-                continue
-
-            # Ref logic
-            phys_ref = None
-            for kw in ref_keywords:
-                for dev in devices_map.keys():
-                    if kw in dev.lower():
-                        phys_ref = dev
-                        break
-                if phys_ref:
-                    break
-            if not phys_ref:
-                phys_ref = sorted(list(devices_map.keys()))[0]
-
-            col_ref = devices_map[phys_ref]
-            vals_ref = pd.to_numeric(df[col_ref], errors="coerce").dropna()
-            mean_ref = vals_ref.mean() if not vals_ref.empty else 0
-            std_ref = vals_ref.std() if not vals_ref.empty else 0
-
-            for dev, col_dut in devices_map.items():
-                vals_dut = pd.to_numeric(df[col_dut], errors="coerce").dropna()
-                if vals_dut.empty:
-                    continue
-
-                mean_dut = vals_dut.mean()
-                std_dut = vals_dut.std()
-
-                base = {
-                    "wandler_key": meta["wandler_key"],
-                    "folder": meta["folder"],
-                    "phase": phase,
-                    "target_load": level,
-                    "nennstrom": meta["nennstrom"],
-                    "val_dut_mean": mean_dut,
-                    "val_dut_std": std_dut,
-                    "dut_name": dev,
-                    "raw_file": meta["dateiname"],
-                    "Hersteller": meta["hersteller_auto"],
-                    "Modell": meta["original_name_clean"],
-                    "Geometrie": "Unbekannt",
-                }
-
-                # Relativ
-                if dev != phys_ref and mean_ref > 0:
-                    e = base.copy()
-                    e.update(
-                        {
-                            "val_ref_mean": mean_ref,
-                            "val_ref_std": std_ref,
-                            "ref_name": phys_ref,
-                            "comparison_mode": "device_ref",
-                        }
-                    )
-                    results.append(e)
-
-                # Absolut
-                if nominal_amp > 0:
-                    e = base.copy()
-                    e.update(
-                        {
-                            "val_ref_mean": nominal_amp,
-                            "val_ref_std": 0.0,
-                            "ref_name": "Nennwert",
-                            "comparison_mode": "nominal_ref",
-                        }
-                    )
-                    results.append(e)
-    return results, "OK"
 
 
 @st.cache_data
@@ -1868,10 +1698,6 @@ if st.sidebar.button("🔄 Export starten", type="primary"):
                     else:
                         fig_ex.update_yaxes(title_text="Strom [A]", row=2, col=1)
 
-                # Hier wenden wir die Slider-Werte auf den Export an
-                fig_ex.update_xaxes(nticks=nticks_x)
-                fig_ex.update_yaxes(nticks=nticks_y)
-
                 with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED) as zf:
                     zf.writestr(
                         f"{safe_conf_name}-Zusammenfassung_MultiCurrent.pdf",
@@ -1941,8 +1767,8 @@ if st.sidebar.button("🔄 Export starten", type="primary"):
                                 bottom_plot_mode,
                                 show_err_bars,
                                 title_prefix=f"{current_title_str}",
-                                nticks_x=nticks_x,
-                                nticks_y=nticks_y,
+                                nticks_x=nticks_x,  # <--- HIER EINFÜGEN
+                                nticks_y=nticks_y,  # <--- HIER EINFÜGEN
                             )
                             zf.writestr(
                                 f"{safe_conf_name}-Detail_{ph}_MultiCurrent.pdf",
@@ -1964,13 +1790,12 @@ if "zip_data" in st.session_state:
 # =============================================================================
 # MAIN TABS
 # =============================================================================
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
+tab1, tab2, tab3, tab4 = st.tabs(
     [
         "📈 Gesamtgenauigkeit",
         "💰 Ökonomische Analyse",
         "⚙️ Stammdaten-Editor",
         "✂️ Rohdaten-Selektor",
-        "🔄 DB-Update",
     ]
 )
 
@@ -2481,126 +2306,16 @@ with tab3:
         else:
             st.warning("Keine Übereinstimmung gefunden.")
 
-with tab4:
-    st.markdown("### ✂️ Manueller Rohdaten-Export")
-
-    # 1. State Initialisierung für Tab 4
-    TARGET_LEVELS_T4 = [5, 20, 50, 80, 90, 100, 120]
-    for level in TARGET_LEVELS_T4:
-        if f"s_{level}" not in st.session_state:
-            st.session_state[f"s_{level}"] = 0
-        if f"e_{level}" not in st.session_state:
-            st.session_state[f"e_{level}"] = 0
-
-    # 2. Layout aufteilen
-    col_sel_nav, col_sel_main = st.columns([1, 3])
-
-    # Globale Daten laden
-    all_files_t4 = get_files_tab4()
-    df_status_t4 = load_status_tracking()
-
-    # --- LINKER BEREICH: NAVIGATION ---
-    with col_sel_nav:
-        st.markdown("#### 📂 Dateiauswahl")
-        files_options = []
-        file_map = {}
-
-        # Dateiliste bauen
-        for f in all_files_t4:
-            name_only = os.path.basename(f)
-            clean_name_base, _ = extract_metadata(f)
-
-            # Status Icon ermitteln
-            icon = "❌"
-            if clean_name_base in df_status_t4.index:
-                s = df_status_t4.loc[clean_name_base, "Status"]
-                if s == "OK":
-                    icon = "✅"
-                elif s == "WARNING":
-                    icon = "⚠️"
-
-            disp = f"{icon} {name_only}"
-            files_options.append(disp)
-            file_map[disp] = f
-
-        if not files_options:
-            st.warning("Keine CSV Dateien.")
-            st.stop()
-
-        # --- CALLBACKS DEFINIEREN ---
-        def on_change_file():
-            # Reset der Bereiche bei Dateiwechsel
-            for l in TARGET_LEVELS_T4:
-                st.session_state[f"s_{l}"] = 0
-                st.session_state[f"e_{l}"] = 0
-
-        def nav_callback(direction):
-            current_val = st.session_state.get("t4_file_sel")
-            if current_val in files_options:
-                curr_idx = files_options.index(current_val)
-                if direction == "prev":
-                    new_idx = (curr_idx - 1) % len(files_options)
-                else:
-                    new_idx = (curr_idx + 1) % len(files_options)
-                st.session_state["t4_file_sel"] = files_options[new_idx]
-                on_change_file()
-
-        def next_open_callback():
-            current_val = st.session_state.get("t4_file_sel")
-            start_idx = 0
-            if current_val in files_options:
-                start_idx = (files_options.index(current_val) + 1) % len(files_options)
-
-            search_list = files_options[start_idx:] + files_options[:start_idx]
-            for disp_str in search_list:
-                f_path = file_map[disp_str]
-                base_n, _ = extract_metadata(f_path)
-                stat = "NONE"
-                if base_n in df_status_t4.index:
-                    stat = df_status_t4.loc[base_n, "Status"]
-                if stat != "OK":
-                    st.session_state["t4_file_sel"] = disp_str
-                    on_change_file()
-                    break
-
-        # --- WIDGETS ANZEIGEN ---
-        sel_file_disp = st.selectbox(
-            "Datei:", files_options, key="t4_file_sel", on_change=on_change_file
-        )
-        sel_file_path = file_map[sel_file_disp]
-
-        # Navigation Buttons
-        c_prev, c_next = st.columns(2)
-        c_prev.button("⬅️ Zurück", key="btn_prev", on_click=nav_callback, args=("prev",))
-        c_next.button("Weiter ➡️", key="btn_next", on_click=nav_callback, args=("next",))
-
-        st.button(
-            "⏩ Nächste Offene",
-            type="primary",
-            use_container_width=True,
-            on_click=next_open_callback,
-        )
-
-    # --- RECHTER BEREICH: INHALT ---
-    with col_sel_main:
         if sel_file_path:
             clean_name_base, detected_nennstrom = extract_metadata(sel_file_path)
 
-            # --- AUTO-LOAD LOGIK ---
-            current_configs = load_all_configs()
-            saved_times = current_configs.get(clean_name_base, {})
-
-            # Status-Prüfung für Anzeige
-            config_found = False
-            if saved_times:
-                config_found = True
-
-            # Nur laden, wenn alle Felder 0 sind UND wir Daten haben
+            # Auto-Load Config Logic
+            saved_times = all_configs.get(clean_name_base, {})
             ranges_empty = all(
                 st.session_state[f"s_{l}"] == 0 for l in TARGET_LEVELS_T4
             )
 
-            if ranges_empty and config_found:
+            if ranges_empty and saved_times:
                 for lvl_str, vals in saved_times.items():
                     if lvl_str.isdigit():
                         lvl = int(lvl_str)
@@ -2612,30 +2327,20 @@ with tab4:
                             st.session_state[f"s_{lvl}"] = vals[0]
                             st.session_state[f"e_{lvl}"] = vals[1]
 
-            # Vorschau laden
             detected = load_file_preview_tab4(sel_file_path)
 
-            # Header Info mit Status-Anzeige
             c_inf1, c_inf2 = st.columns([3, 1])
             with c_inf1:
                 st.subheader(clean_name_base)
-                if config_found:
-                    st.caption("✅ Zeiten aus Config geladen")
-                else:
-                    st.caption("❌ Keine gespeicherten Zeiten für diese Datei gefunden")
-
             with c_inf2:
+                # Hier ist der Key, der den Fehler verursachte. Jetzt gibt es ihn nur noch 1x.
                 nennstrom_t4 = st.number_input(
-                    "Nennstrom:",
-                    value=float(detected_nennstrom),
-                    key=f"ns_{clean_name_base}",
+                    "Nennstrom:", value=float(detected_nennstrom), key="ns_t4"
                 )
 
-            # Volle Daten laden
             t_idx, full_data_t4 = load_all_data_tab4(sel_file_path, detected)
 
             if t_idx:
-                # Plot Konfiguration
                 c_tool1, c_tool2 = st.columns([2, 1])
                 with c_tool1:
                     sel_ref_dev = st.selectbox(
@@ -2643,24 +2348,18 @@ with tab4:
                     )
                 with c_tool2:
                     if st.button("🔄 Config neu laden"):
-                        fresh_configs = load_all_configs()
-                        fresh_times = fresh_configs.get(clean_name_base, {})
-                        if fresh_times:
-                            for lvl_str, vals in fresh_times.items():
-                                if lvl_str.isdigit():
-                                    lvl = int(lvl_str)
-                                    if (
-                                        lvl in TARGET_LEVELS_T4
-                                        and isinstance(vals, list)
-                                        and len(vals) == 2
-                                    ):
-                                        st.session_state[f"s_{lvl}"] = vals[0]
-                                        st.session_state[f"e_{lvl}"] = vals[1]
-                            st.rerun()
-                        else:
-                            st.error("Nichts in Config gefunden.")
+                        for lvl_str, vals in saved_times.items():
+                            if lvl_str.isdigit():
+                                lvl = int(lvl_str)
+                                if (
+                                    lvl in TARGET_LEVELS_T4
+                                    and isinstance(vals, list)
+                                    and len(vals) == 2
+                                ):
+                                    st.session_state[f"s_{lvl}"] = vals[0]
+                                    st.session_state[f"e_{lvl}"] = vals[1]
+                        st.rerun()
 
-                # Plot erstellen
                 ref_l1 = full_data_t4[sel_ref_dev]["L1"]
                 if ref_l1 is not None:
                     fig_sel = go.Figure()
@@ -2674,7 +2373,6 @@ with tab4:
                         )
                     )
 
-                    # Bereiche einzeichnen
                     for level in TARGET_LEVELS_T4:
                         fig_sel.add_hline(
                             y=level, line_dash="dot", line_color="gray", opacity=0.5
@@ -2703,7 +2401,6 @@ with tab4:
                     )
                     st.plotly_chart(fig_sel, use_container_width=True)
 
-                # Eingabefelder
                 st.markdown("##### Bereiche definieren")
                 batches = [
                     TARGET_LEVELS_T4[i : i + 4]
@@ -2730,7 +2427,341 @@ with tab4:
 
                 st.divider()
 
-                # Export Controls
+                c_exp1, c_exp2, c_exp3 = st.columns([2, 1, 1])
+                with c_exp1:
+                    exp_devs = st.multiselect(
+                        "Export Geräte:", detected, default=detected
+                    )
+                with c_exp2:
+                    skip_n = st.number_input("Einschwingen Skip:", value=0)
+                with c_exp3:
+                    stat_opt = st.radio("Status:", ["OK", "Problem"], horizontal=True)
+
+                if st.button(
+                    "🚀 Speichern & Exportieren",
+                    type="primary",
+                    use_container_width=True,
+                ):
+                    if not exp_devs:
+                        st.error("Keine Geräte gewählt.")
+                    else:
+                        semap = {}
+                        for l in TARGET_LEVELS_T4:
+                            semap[l] = (
+                                st.session_state[f"s_{l}"],
+                                st.session_state[f"e_{l}"],
+                            )
+
+                        out = save_sorted_raw_data_tab4(
+                            sel_file_path,
+                            full_data_t4,
+                            semap,
+                            exp_devs,
+                            sel_ref_dev,
+                            clean_name_base,
+                            skip_n,
+                        )
+                        if out:
+                            s_code = "WARNING" if stat_opt == "Problem" else "OK"
+                            save_tracking_status(clean_name_base, s_code)
+                            st.success(f"Gespeichert: {out}")
+        if sel_file_path:
+            # Metadaten (Name und Nennstrom) holen
+            clean_name_base, detected_nennstrom = extract_metadata(sel_file_path)
+
+            # --- LOGIK START: ZEITEN AUS CONFIG LADEN ---
+            # 1. Config Eintrag suchen
+            saved_times = all_configs.get(clean_name_base, {})
+
+            # 2. Prüfen, ob die aktuellen Felder leer sind (alles 0)
+            ranges_empty = all(
+                st.session_state[f"s_{l}"] == 0 for l in TARGET_LEVELS_T4
+            )
+
+            # 3. Wenn leer und Config vorhanden -> Laden
+            if ranges_empty and saved_times:
+                for lvl_str, vals in saved_times.items():
+                    # JSON Keys sind Strings ("5"), wir brauchen Int
+                    if lvl_str.isdigit():
+                        lvl = int(lvl_str)
+                        # Prüfen ob Level relevant ist und Datenformat [Start, Ende] passt
+                        if (
+                            lvl in TARGET_LEVELS_T4
+                            and isinstance(vals, list)
+                            and len(vals) == 2
+                        ):
+                            st.session_state[f"s_{lvl}"] = vals[0]
+                            st.session_state[f"e_{lvl}"] = vals[1]
+            # --- LOGIK ENDE ---
+
+            detected = load_file_preview_tab4(sel_file_path)
+
+            # Info Header
+            c_inf1, c_inf2 = st.columns([3, 1])
+            with c_inf1:
+                st.subheader(clean_name_base)
+            with c_inf2:
+                # Nennstrom anzeigen/ändern
+                nennstrom_t4 = st.number_input(
+                    "Nennstrom:", value=float(detected_nennstrom), key="ns_t4"
+                )
+
+            # Daten laden
+            t_idx, full_data_t4 = load_all_data_tab4(sel_file_path, detected)
+
+            if t_idx:
+                # Toolbar
+                c_tool1, c_tool2 = st.columns([2, 1])
+                with c_tool1:
+                    sel_ref_dev = st.selectbox(
+                        "Referenz-Gerät (L1):", detected, key="ref_dev_t4"
+                    )
+                with c_tool2:
+                    # Manueller Reload Button, falls man sich verklickt hat
+                    if st.button("🔄 Config neu laden"):
+                        for lvl_str, vals in saved_times.items():
+                            if lvl_str.isdigit():
+                                lvl = int(lvl_str)
+                                if (
+                                    lvl in TARGET_LEVELS_T4
+                                    and isinstance(vals, list)
+                                    and len(vals) == 2
+                                ):
+                                    st.session_state[f"s_{lvl}"] = vals[0]
+                                    st.session_state[f"e_{lvl}"] = vals[1]
+                        st.rerun()
+
+                # PLOT
+                ref_l1 = full_data_t4[sel_ref_dev]["L1"]
+                if ref_l1 is not None:
+                    fig_sel = go.Figure()
+                    pct_val = (ref_l1 / nennstrom_t4) * 100
+                    fig_sel.add_trace(
+                        go.Scatter(
+                            x=t_idx,
+                            y=pct_val,
+                            name=f"{sel_ref_dev} L1 %",
+                            line=dict(color="orange"),
+                        )
+                    )
+
+                    # Areas (Schattierung der gewählten Bereiche)
+                    for level in TARGET_LEVELS_T4:
+                        fig_sel.add_hline(
+                            y=level, line_dash="dot", line_color="gray", opacity=0.5
+                        )
+                        s = st.session_state[f"s_{level}"]
+                        e = st.session_state[f"e_{level}"]
+                        if s > 0 and e > s:
+                            fig_sel.add_vrect(
+                                x0=s,
+                                x1=e,
+                                fillcolor="rgba(0,200,100,0.2)",
+                                line_width=0,
+                            )
+                            fig_sel.add_annotation(
+                                x=(s + e) / 2,
+                                y=level + 5,
+                                text=f"<b>{level}%</b>",
+                                showarrow=False,
+                                font=dict(color="green"),
+                            )
+
+                    fig_sel.update_layout(
+                        height=400,
+                        margin=dict(t=30, b=0, l=0, r=0),
+                        yaxis_title="Last %",
+                    )
+                    st.plotly_chart(fig_sel, use_container_width=True)
+
+                # INPUTS (Start/Ende Eingabefelder)
+                st.markdown("##### Bereiche definieren")
+
+                batches = [
+                    TARGET_LEVELS_T4[i : i + 4]
+                    for i in range(0, len(TARGET_LEVELS_T4), 4)
+                ]
+                for batch in batches:
+                    c_h = st.columns(4)
+                    for i, l in enumerate(batch):
+                        c_h[i].markdown(f"**{l}%**")
+                    c_e = st.columns(4)
+                    for i, l in enumerate(batch):
+                        c_e[i].number_input(
+                            "Ende",
+                            key=f"e_{l}",
+                            on_change=update_start_callback,
+                            args=(l,),
+                            label_visibility="collapsed",
+                        )
+                    c_s = st.columns(4)
+                    for i, l in enumerate(batch):
+                        c_s[i].number_input(
+                            "Start", key=f"s_{l}", label_visibility="collapsed"
+                        )
+
+                st.divider()
+
+                # EXPORT BEREICH
+                c_exp1, c_exp2, c_exp3 = st.columns([2, 1, 1])
+                with c_exp1:
+                    exp_devs = st.multiselect(
+                        "Export Geräte:", detected, default=detected
+                    )
+                with c_exp2:
+                    skip_n = st.number_input("Einschwingen Skip:", value=0)
+                with c_exp3:
+                    stat_opt = st.radio("Status:", ["OK", "Problem"], horizontal=True)
+
+                if st.button(
+                    "🚀 Speichern & Exportieren",
+                    type="primary",
+                    use_container_width=True,
+                ):
+                    if not exp_devs:
+                        st.error("Keine Geräte gewählt.")
+                    else:
+                        semap = {}
+                        for l in TARGET_LEVELS_T4:
+                            semap[l] = (
+                                st.session_state[f"s_{l}"],
+                                st.session_state[f"e_{l}"],
+                            )
+
+                        out = save_sorted_raw_data_tab4(
+                            sel_file_path,
+                            full_data_t4,
+                            semap,
+                            exp_devs,
+                            sel_ref_dev,
+                            clean_name_base,
+                            skip_n,
+                        )
+                        if out:
+                            s_code = "WARNING" if stat_opt == "Problem" else "OK"
+                            save_tracking_status(clean_name_base, s_code)
+                            st.success(f"Gespeichert: {out}")
+            clean_name_base = os.path.basename(sel_file_path).replace(".csv", "")
+
+            # Smart Loading Config
+            # Prüfen ob wir Config haben (nutzt main load_all_configs)
+            loaded_cfg = all_configs.get(clean_name_base, {})
+            # Wenn state 0 ist, aber Config da, laden
+            if (
+                all(st.session_state[f"s_{l}"] == 0 for l in TARGET_LEVELS_T4)
+                and loaded_cfg
+            ):
+                for l_str, vals in loaded_cfg.items():
+                    if isinstance(vals, list) and len(vals) == 2:
+                        l_int = int(l_str) if l_str.isdigit() else 0
+                        if l_int in TARGET_LEVELS_T4:
+                            st.session_state[f"s_{l_int}"] = vals[0]
+                            st.session_state[f"e_{l_int}"] = vals[1]
+
+            detected = load_file_preview_tab4(sel_file_path)
+
+            # Info Header
+            c_inf1, c_inf2 = st.columns([3, 1])
+            with c_inf1:
+                st.subheader(clean_name_base)
+            with c_inf2:
+                # Nennstrom aus Dateiname raten
+                match = re.search(r"[-_](\d+)A[-_]", clean_name_base)
+                ns_val = float(match.group(1)) if match else 2000.0
+                nennstrom_t4 = st.number_input("Nennstrom:", value=ns_val, key="ns_t4")
+
+            # Load Full Data
+            t_idx, full_data_t4 = load_all_data_tab4(sel_file_path, detected)
+
+            if t_idx:
+                # Plot Settings
+                sel_ref_dev = st.selectbox(
+                    "Referenz-Gerät (L1):", detected, key="ref_dev_t4"
+                )
+
+                # RECOVERY BUTTON
+                if st.button("♻️ Import von existierender 'Sortiert'-Datei"):
+                    l1_dat = full_data_t4[sel_ref_dev]["L1"]
+                    succ, txt = try_recover_from_sorted_file(
+                        sel_file_path, l1_dat, sel_ref_dev
+                    )
+                    if succ:
+                        st.success(txt)
+                        st.rerun()
+                    else:
+                        st.error(txt)
+
+                # PLOT
+                ref_l1 = full_data_t4[sel_ref_dev]["L1"]
+                if ref_l1 is not None:
+                    fig_sel = go.Figure()
+                    pct_val = (ref_l1 / nennstrom_t4) * 100
+                    fig_sel.add_trace(
+                        go.Scatter(
+                            x=t_idx,
+                            y=pct_val,
+                            name=f"{sel_ref_dev} L1 %",
+                            line=dict(color="orange"),
+                        )
+                    )
+
+                    # Areas
+                    for level in TARGET_LEVELS_T4:
+                        fig_sel.add_hline(y=level, line_dash="dot", line_color="gray")
+                        s = st.session_state[f"s_{level}"]
+                        e = st.session_state[f"e_{level}"]
+                        if s > 0 and e > s:
+                            fig_sel.add_vrect(
+                                x0=s,
+                                x1=e,
+                                fillcolor="rgba(0,200,100,0.2)",
+                                line_width=0,
+                            )
+                            fig_sel.add_annotation(
+                                x=(s + e) / 2,
+                                y=level + 5,
+                                text=f"<b>{level}%</b>",
+                                showarrow=False,
+                                font=dict(color="green"),
+                            )
+
+                    fig_sel.update_layout(
+                        height=400,
+                        margin=dict(t=30, b=0, l=0, r=0),
+                        yaxis_title="Last %",
+                    )
+                    st.plotly_chart(fig_sel, use_container_width=True)
+
+                # INPUTS
+                st.markdown("##### Bereiche definieren")
+
+                # Batch Inputs
+                batches = [
+                    TARGET_LEVELS_T4[i : i + 4]
+                    for i in range(0, len(TARGET_LEVELS_T4), 4)
+                ]
+                for batch in batches:
+                    c_h = st.columns(4)
+                    for i, l in enumerate(batch):
+                        c_h[i].markdown(f"**{l}%**")
+                    c_e = st.columns(4)
+                    for i, l in enumerate(batch):
+                        c_e[i].number_input(
+                            "Ende",
+                            key=f"e_{l}",
+                            on_change=update_start_callback,
+                            args=(l,),
+                            label_visibility="collapsed",
+                        )
+                    c_s = st.columns(4)
+                    for i, l in enumerate(batch):
+                        c_s[i].number_input(
+                            "Start", key=f"s_{l}", label_visibility="collapsed"
+                        )
+
+                st.divider()
+
+                # EXPORT
                 c_exp1, c_exp2, c_exp3 = st.columns([2, 1, 1])
                 with c_exp1:
                     exp_devs = st.multiselect(
@@ -2770,103 +2801,226 @@ with tab4:
                             save_tracking_status(clean_name_base, s_code)
                             st.success(f"Gespeichert: {out}")
 
-with tab5:
-    st.markdown("### 🔄 DB-Update (Smart Merge)")
-    st.info(
-        "Hier werden die exportierten `_sortiert.csv` Dateien eingelesen und in die Datenbank geschrieben. Bereits vorhandene Metadaten (Preise etc.) bleiben erhalten."
-    )
 
-    col_db_act, col_db_info = st.columns([1, 2])
+with tab4:
+    st.markdown("### ✂️ Manueller Rohdaten-Export")
 
-    with col_db_act:
-        if st.button("🚀 Update starten", type="primary", use_container_width=True):
-            status_container = st.empty()
-            progress_bar = st.progress(0)
+    # 1. State Initialisierung für Tab 4
+    TARGET_LEVELS_T4 = [5, 20, 50, 80, 90, 100, 120]
+    for level in TARGET_LEVELS_T4:
+        if f"s_{level}" not in st.session_state: st.session_state[f"s_{level}"] = 0
+        if f"e_{level}" not in st.session_state: st.session_state[f"e_{level}"] = 0
 
-            # 1. Konfiguration
-            SEARCH_DIR_AGG = os.path.join(BASE_DIR, "messungen_sortiert")
-            REF_KEYWORDS = ["pac1", "einspeisung", "ref", "source", "norm"]
-            META_COLS_KEEP_AGG = [
-                "Preis (€)",
-                "Nennbürde (VA)",
-                "T (mm)",
-                "B (mm)",
-                "H (mm)",
-                "Kommentar",
-                "Hersteller",
-                "Modell",
-                "Geometrie",
-            ]
+    # 2. Layout aufteilen
+    col_sel_nav, col_sel_main = st.columns([1, 3])
 
-            # 2. Alte Metadaten sichern
-            status_container.info("Lese existierende Datenbank...")
-            saved_metadata = aggregator_load_metadata(DATA_FILE, META_COLS_KEEP_AGG)
+    # Globale Daten laden
+    all_files_t4 = get_files_tab4()
+    df_status_t4 = load_status_tracking()
 
-            # 3. Dateien suchen
-            files = glob.glob(
-                os.path.join(SEARCH_DIR_AGG, "**", "*_sortiert.csv"), recursive=True
-            )
+    # --- LINKER BEREICH: NAVIGATION ---
+    with col_sel_nav:
+        st.markdown("#### 📂 Dateiauswahl")
+        files_options = []
+        file_map = {}
+        
+        # Dateiliste bauen
+        for f in all_files_t4:
+            name_only = os.path.basename(f)
+            clean_name_base, _ = extract_metadata(f)
 
-            if not files:
-                status_container.error("❌ Keine sortierten Dateien gefunden!")
-            else:
-                all_data = []
-                count_ok = 0
-                total_files = len(files)
+            # Status Icon ermitteln
+            icon = "❌"
+            if clean_name_base in df_status_t4.index:
+                s = df_status_t4.loc[clean_name_base, "Status"]
+                if s == "OK": icon = "✅"
+                elif s == "WARNING": icon = "⚠️"
 
-                for i, f in enumerate(files):
-                    progress_bar.progress((i + 1) / total_files)
+            disp = f"{icon} {name_only}"
+            files_options.append(disp)
+            file_map[disp] = f
 
-                    # Metadaten aus Dateiname
-                    meta = aggregator_extract_metadata(f)
+        if not files_options:
+            st.warning("Keine CSV Dateien.")
+            st.stop()
 
-                    # Datei analysieren
-                    stats, status_msg = aggregator_analyze_file(
-                        f, meta, TARGET_LEVELS_T4, PHASES, REF_KEYWORDS
-                    )
+        # --- CALLBACKS DEFINIEREN ---
+        def on_change_file():
+            # Reset der Bereiche bei Dateiwechsel
+            for l in TARGET_LEVELS_T4:
+                st.session_state[f"s_{l}"] = 0
+                st.session_state[f"e_{l}"] = 0
 
-                    if stats:
-                        # Metadaten injizieren (Smart Merge)
-                        filename_key = meta["dateiname"]
-                        if filename_key in saved_metadata:
-                            saved_info = saved_metadata[filename_key]
-                            for stat_entry in stats:
-                                stat_entry.update(saved_info)
-
-                        all_data.extend(stats)
-                        count_ok += 1
-                    else:
-                        st.warning(f"⚠️ {os.path.basename(f)}: {status_msg}")
-
-                if all_data:
-                    # Speichern
-                    status_container.info("Speichere Datenbank...")
-                    df_all = pd.DataFrame(all_data)
-
-                    # Sicherstellen, dass Spalten existieren
-                    for col in META_COLS_KEEP_AGG:
-                        if col not in df_all.columns:
-                            df_all[col] = "" if col == "Kommentar" else 0.0
-
-                    # Deduplizieren
-                    df_clean = df_all.drop_duplicates(
-                        subset=[
-                            "raw_file",
-                            "dut_name",
-                            "phase",
-                            "target_load",
-                            "comparison_mode",
-                        ],
-                        keep="last",
-                    )
-
-                    if save_db(df_clean):
-                        status_container.success(
-                            f"✅ Update fertig!\n"
-                            f"- Dateien verarbeitet: {count_ok}/{total_files}\n"
-                            f"- Einträge gesamt: {len(df_clean)}"
-                        )
-                    else:
-                        status_container.error("Fehler beim Speichern der DB.")
+        def nav_callback(direction):
+            current_val = st.session_state.get("t4_file_sel")
+            if current_val in files_options:
+                curr_idx = files_options.index(current_val)
+                if direction == "prev":
+                    new_idx = (curr_idx - 1) % len(files_options)
                 else:
-                    status_container.error("Keine gültigen Daten extrahiert.")
+                    new_idx = (curr_idx + 1) % len(files_options)
+                st.session_state["t4_file_sel"] = files_options[new_idx]
+                on_change_file()
+
+        def next_open_callback():
+            current_val = st.session_state.get("t4_file_sel")
+            start_idx = 0
+            if current_val in files_options:
+                start_idx = (files_options.index(current_val) + 1) % len(files_options)
+            
+            search_list = files_options[start_idx:] + files_options[:start_idx]
+            for disp_str in search_list:
+                f_path = file_map[disp_str]
+                base_n, _ = extract_metadata(f_path)
+                stat = "NONE"
+                if base_n in df_status_t4.index: 
+                    stat = df_status_t4.loc[base_n, "Status"]
+                if stat != "OK":
+                    st.session_state["t4_file_sel"] = disp_str
+                    on_change_file()
+                    break
+
+        # --- WIDGETS ANZEIGEN ---
+        sel_file_disp = st.selectbox(
+            "Datei:", 
+            files_options, 
+            key="t4_file_sel", 
+            on_change=on_change_file
+        )
+        sel_file_path = file_map[sel_file_disp]
+
+        # Navigation Buttons
+        c_prev, c_next = st.columns(2)
+        c_prev.button("⬅️ Zurück", key="btn_prev", on_click=nav_callback, args=("prev",))
+        c_next.button("Weiter ➡️", key="btn_next", on_click=nav_callback, args=("next",))
+        
+        st.button(
+            "⏩ Nächste Offene", 
+            type="primary", 
+            use_container_width=True, 
+            on_click=next_open_callback
+        )
+
+    # --- RECHTER BEREICH: INHALT ---
+    with col_sel_main:
+        if sel_file_path:
+            clean_name_base, detected_nennstrom = extract_metadata(sel_file_path)
+
+            # --- AUTO-LOAD LOGIK ---
+            current_configs = load_all_configs()
+            saved_times = current_configs.get(clean_name_base, {})
+            
+            # Status-Prüfung für Anzeige
+            config_found = False
+            if saved_times:
+                config_found = True
+
+            # Nur laden, wenn alle Felder 0 sind UND wir Daten haben
+            ranges_empty = all(st.session_state[f"s_{l}"] == 0 for l in TARGET_LEVELS_T4)
+            
+            if ranges_empty and config_found:
+                for lvl_str, vals in saved_times.items():
+                    if lvl_str.isdigit():
+                        lvl = int(lvl_str)
+                        if lvl in TARGET_LEVELS_T4 and isinstance(vals, list) and len(vals) == 2:
+                            st.session_state[f"s_{lvl}"] = vals[0]
+                            st.session_state[f"e_{lvl}"] = vals[1]
+
+            # Vorschau laden
+            detected = load_file_preview_tab4(sel_file_path)
+
+            # Header Info mit Status-Anzeige
+            c_inf1, c_inf2 = st.columns([3, 1])
+            with c_inf1:
+                st.subheader(clean_name_base)
+                if config_found:
+                    st.caption("✅ Zeiten aus Config geladen")
+                else:
+                    st.caption("❌ Keine gespeicherten Zeiten für diese Datei gefunden")
+            
+            with c_inf2:
+                nennstrom_t4 = st.number_input(
+                    "Nennstrom:", 
+                    value=float(detected_nennstrom), 
+                    key=f"ns_{clean_name_base}"
+                )
+
+            # Volle Daten laden
+            t_idx, full_data_t4 = load_all_data_tab4(sel_file_path, detected)
+
+            if t_idx:
+                # Plot Konfiguration
+                c_tool1, c_tool2 = st.columns([2, 1])
+                with c_tool1:
+                    sel_ref_dev = st.selectbox("Referenz-Gerät (L1):", detected, key="ref_dev_t4")
+                with c_tool2:
+                    if st.button("🔄 Config neu laden"):
+                        fresh_configs = load_all_configs()
+                        fresh_times = fresh_configs.get(clean_name_base, {})
+                        if fresh_times:
+                            for lvl_str, vals in fresh_times.items():
+                                if lvl_str.isdigit():
+                                    lvl = int(lvl_str)
+                                    if lvl in TARGET_LEVELS_T4 and isinstance(vals, list) and len(vals) == 2:
+                                        st.session_state[f"s_{lvl}"] = vals[0]
+                                        st.session_state[f"e_{lvl}"] = vals[1]
+                            st.rerun()
+                        else:
+                            st.error("Nichts in Config gefunden.")
+
+                # Plot erstellen
+                ref_l1 = full_data_t4[sel_ref_dev]["L1"]
+                if ref_l1 is not None:
+                    fig_sel = go.Figure()
+                    pct_val = (ref_l1 / nennstrom_t4) * 100
+                    fig_sel.add_trace(go.Scatter(x=t_idx, y=pct_val, name=f"{sel_ref_dev} L1 %", line=dict(color="orange")))
+                    
+                    # Bereiche einzeichnen
+                    for level in TARGET_LEVELS_T4:
+                        fig_sel.add_hline(y=level, line_dash="dot", line_color="gray", opacity=0.5)
+                        s = st.session_state[f"s_{level}"]
+                        e = st.session_state[f"e_{level}"]
+                        if s > 0 and e > s:
+                            fig_sel.add_vrect(x0=s, x1=e, fillcolor="rgba(0,200,100,0.2)", line_width=0)
+                            fig_sel.add_annotation(x=(s+e)/2, y=level+5, text=f"<b>{level}%</b>", showarrow=False, font=dict(color="green"))
+                    
+                    fig_sel.update_layout(height=400, margin=dict(t=30,b=0,l=0,r=0), yaxis_title="Last %")
+                    st.plotly_chart(fig_sel, use_container_width=True)
+
+                # Eingabefelder
+                st.markdown("##### Bereiche definieren")
+                batches = [TARGET_LEVELS_T4[i:i + 4] for i in range(0, len(TARGET_LEVELS_T4), 4)]
+                for batch in batches:
+                    c_h = st.columns(4)
+                    for i, l in enumerate(batch): c_h[i].markdown(f"**{l}%**")
+                    c_e = st.columns(4)
+                    for i, l in enumerate(batch): 
+                        c_e[i].number_input("Ende", key=f"e_{l}", on_change=update_start_callback, args=(l,), label_visibility="collapsed")
+                    c_s = st.columns(4)
+                    for i, l in enumerate(batch): 
+                        c_s[i].number_input("Start", key=f"s_{l}", label_visibility="collapsed")
+
+                st.divider()
+                
+                # Export Controls
+                c_exp1, c_exp2, c_exp3 = st.columns([2, 1, 1])
+                with c_exp1:
+                    exp_devs = st.multiselect("Export Geräte:", detected, default=detected)
+                with c_exp2:
+                    skip_n = st.number_input("Einschwingen Skip:", value=0)
+                with c_exp3:
+                    stat_opt = st.radio("Status:", ["OK", "Problem"], horizontal=True)
+                
+                if st.button("🚀 Speichern & Exportieren", type="primary", use_container_width=True):
+                    if not exp_devs:
+                        st.error("Keine Geräte gewählt.")
+                    else:
+                        semap = {}
+                        for l in TARGET_LEVELS_T4:
+                            semap[l] = (st.session_state[f"s_{l}"], st.session_state[f"e_{l}"])
+                        
+                        out = save_sorted_raw_data_tab4(sel_file_path, full_data_t4, semap, exp_devs, sel_ref_dev, clean_name_base, skip_n)
+                        if out:
+                            s_code = "WARNING" if stat_opt == "Problem" else "OK"
+                            save_tracking_status(clean_name_base, s_code)
+                            st.success(f"Gespeichert: {out}")
