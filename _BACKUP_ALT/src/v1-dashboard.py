@@ -261,7 +261,7 @@ def auto_format_name(row):
         # Regex für Bürde (z.B. 0R1, 8R1, 10R)
         if re.match(r"^\d+R\d*$", t):
             val = t.replace("R", ",")
-            burden_part = f"{val} Ω"
+            burden_part = f"{val} $\Omega$"
         else:
             name_parts.append(t)
 

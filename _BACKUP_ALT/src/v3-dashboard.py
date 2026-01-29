@@ -230,7 +230,7 @@ def auto_format_name(row):
         if not t:
             continue
         if re.match(r"^\d+R\d*$", t):
-            burden_part = f"{t.replace('R', ',')} Ω"
+            burden_part = f"{t.replace('R', ',')} $\Omega$"
         else:
             name_parts.append(t)
     base_name = " ".join(name_parts)

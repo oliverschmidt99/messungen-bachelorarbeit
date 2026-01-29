@@ -150,7 +150,7 @@ def auto_format_name(row):
         if not t:
             continue
         if re.match(r"^\d+R\d*$", t):
-            burden_part = f"{t.replace('R', ',')} Ω"
+            burden_part = f"{t.replace('R', ',')} $\Omega$"
         else:
             name_parts.append(t)
     base_name = " ".join(name_parts)
@@ -2289,7 +2289,7 @@ with tab5:
 
 
 # =======================================================
-# --- EXECUTE EXPORT (GANZ UNTEN, DAMIT ALLES DA IST) ---
+# --- EXECUTE EXPORT (GANZ UNTEN) ---
 # =======================================================
 if trigger_export_btn:
     if not export_selection:
@@ -2303,15 +2303,14 @@ if trigger_export_btn:
         safe_conf_name = sanitize_filename(current_config_name)
         zip_buffer = io.BytesIO()
 
-        with st.spinner("Erstelle PDF-Export..."):
+        with st.spinner("Erstelle PDF & LaTeX Export..."):
             with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED) as zf:
-                
+
                 # --- EXPORT 1: GESAMTÜBERSICHT (SNAPSHOT) ---
                 if "Gesamtübersicht (Tab 1)" in export_selection:
                     if "fig_snapshot_tab1" in st.session_state:
-                        # Wir holen das fertige Diagramm aus dem Speicher
                         fig_ex = st.session_state["fig_snapshot_tab1"]
-                        fig_ex.update_layout(width=1123, height=794) # A4 Querformat erzwingen
+                        fig_ex.update_layout(width=1123, height=794)
                         zf.writestr(
                             f"{safe_conf_name}-Zusammenfassung_MultiCurrent.pdf",
                             fig_ex.to_image(format="pdf")
@@ -2319,12 +2318,11 @@ if trigger_export_btn:
                     else:
                         st.warning("⚠️ Gesamtübersicht noch nicht geladen (bitte Tab 1 einmal öffnen).")
 
-               # --- EXPORT 2: ÖKONOMIE (DYNAMISCHE NEUBERECHNUNG) ---
-                # Wir berechnen die Diagramme neu, damit sie immer aktuell sind, egal welcher Tab offen ist.
+                # --- EXPORT 2: ÖKONOMIE (DYNAMISCHE NEUBERECHNUNG) ---
                 eco_requests = [s for s in export_selection if "Ökonomie" in s]
 
                 if eco_requests and not df_sub.empty:
-                    # A) Daten aggregieren (Kopie der Logik aus Tab 2)
+                    # A) Daten aggregieren
                     df_err_exp = (
                         df_sub.groupby("unique_id")
                         .agg(
@@ -2343,7 +2341,7 @@ if trigger_export_btn:
                     )
                     df_err_exp["volumen"] = (df_err_exp["vol_t"] * df_err_exp["vol_b"] * df_err_exp["vol_h"]) / 1000.0
 
-                    # Mapping Definitionen (Lokal für Export)
+                    # Mapping Definitionen
                     Y_OPT_EXP = {
                         "Fehler Niederstrom": "err_nieder", "Fehler Nennstrom": "err_nom",
                         "Fehler Überlast": "err_high", "Preis (€)": "preis",
@@ -2352,15 +2350,11 @@ if trigger_export_btn:
                     }
                     REV_Y_EXP = {v: k for k, v in Y_OPT_EXP.items()}
 
-                    # Einstellungen aus Session State holen (damit Export zur Sidebar passt)
                     sel_y_keys = st.session_state.get("k_eco_y", ["Fehler Nennstrom"])
                     sel_y_cols = [Y_OPT_EXP[k] for k in sel_y_keys if k in Y_OPT_EXP]
                     sel_x_key = st.session_state.get("k_eco_x", "Preis (€)")
                     col_x_exp = "preis" if "Preis" in sel_x_key else "volumen"
-
                     color_map_exp = dict(zip(df_err_exp["legend_name"], df_err_exp["color_hex"]))
-
-                    # B) Diagramme generieren & Speichern
 
                     # 1. SCATTER
                     if "Ökonomie: Scatter-Plot" in export_selection:
@@ -2375,12 +2369,14 @@ if trigger_export_btn:
                         fig_eco.update_layout(template="plotly_white", width=1123, height=794, font=dict(family="Serif", size=14, color="black"), legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"))
                         zf.writestr(f"{safe_conf_name}-Oekonomie_Scatter.pdf", fig_eco.to_image(format="pdf"))
 
-                    # 2. PERFORMANCE INDEX (RANKING)
+                    # 2. PERFORMANCE INDEX (RANKING) + LATEX
                     if "Ökonomie: Performance-Index" in export_selection:
                         title_str = TITLES_MAP.get("Performance-Index", "Performance Index")
                         df_rank = df_err_exp.copy()
                         df_rank["total_score"] = 0.0
                         norm_cols = []
+
+                        # Score Berechnung
                         for label in sel_y_keys:
                             if label in Y_OPT_EXP:
                                 raw_c = Y_OPT_EXP[label]
@@ -2391,28 +2387,65 @@ if trigger_export_btn:
                                 norm_cols.append(label)
 
                         df_rank = df_rank.sort_values("total_score", ascending=True)
+
+                        # --- PDF ERZEUGUNG ---
                         df_long = df_rank.melt(id_vars=["legend_name"], value_vars=norm_cols, var_name="Kategorie", value_name="Anteil (%)")
-
-                        # HIER WURDE 'color_discrete_sequence' HINZUGEFÜGT
                         fig_eco = px.bar(
-                            df_long,
-                            y="legend_name",
-                            x="Anteil (%)",
-                            color="Kategorie",
-                            orientation="h",
-                            title=title_str,
-                            color_discrete_sequence=px.colors.qualitative.Safe
+                            df_long, y="legend_name", x="Anteil (%)", color="Kategorie",
+                            orientation="h", title=title_str, color_discrete_sequence=px.colors.qualitative.Safe
                         )
-
                         fig_eco.update_layout(
-                            yaxis=dict(autorange="reversed"),
-                            template="plotly_white",
-                            width=1123,
-                            height=794,
-                            font=dict(family="Serif", size=14, color="black"),
-                            legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center")
+                            yaxis=dict(autorange="reversed"), template="plotly_white", width=1123, height=794,
+                            font=dict(family="Serif", size=14, color="black"), legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center")
                         )
                         zf.writestr(f"{safe_conf_name}-Oekonomie_Ranking.pdf", fig_eco.to_image(format="pdf"))
+
+# --- LATEX TABELLEN ERZEUGUNG (HIER EINGEFÜGT) ---
+                        latex_lines = []
+                        latex_lines.append(r"\begin{table}[H]")
+                        latex_lines.append(r"    \centering")
+                        latex_lines.append(rf"    \caption{{{title_str}}}")
+                        latex_lines.append(rf"    \label{{tab:{safe_conf_name}_ranking}}")
+
+                        # Spaltendefinition: l für Name, c für jede Metrik + c für Score
+                        col_def = "l" + "c" * (len(norm_cols) + 1)
+                        latex_lines.append(rf"    \begin{{tabular}}{{{col_def}}}")
+
+                        # 1. TOPRULE (statt \hline)
+                        latex_lines.append(r"        \toprule")
+
+                        # Header
+                        header_cells = [r"\textbf{Messsystem}"]
+                        for col_name in norm_cols:
+                            clean_col = col_name.replace("%", r"\%").replace("_", r"\_")
+                            header_cells.append(rf"\textbf{{{clean_col} [\%]}}")
+                        header_cells.append(r"\textbf{Fehler-Score [\%]}")
+
+                        # 2. MIDRULE (Header abschließen, dann Linie)
+                        latex_lines.append("        " + " & ".join(header_cells) + r" \\")
+                        latex_lines.append(r"        \midrule")
+
+                        # Rows
+                        for _, row in df_rank.iterrows():
+                            name_clean = str(row['legend_name']).replace("_", r"\_").replace("%", r"\%").replace("&", r"\&")
+                            row_cells = [name_clean]
+                            for col_name in norm_cols:
+                                val = row[col_name]
+                                row_cells.append(f"{val:.2f}".replace(".", ","))
+
+                            score_val = row["total_score"]
+                            row_cells.append(f"{score_val:.2f}".replace(".", ","))
+                            latex_lines.append("        " + " & ".join(row_cells) + r" \\")
+
+                        # 3. BOTTOMRULE (statt \hline)
+                        latex_lines.append(r"        \bottomrule")
+                        latex_lines.append(r"    \end{tabular}")
+                        latex_lines.append(r"\end{table}")
+
+                        # Schreiben
+                        latex_content = "\n".join(latex_lines)
+                        zf.writestr(f"{safe_conf_name}-Oekonomie_Ranking.tex", latex_content)
+
 
                     # 3. HEATMAP
                     if "Ökonomie: Heatmap" in export_selection:
@@ -2457,7 +2490,7 @@ if trigger_export_btn:
 
                         for i, row in df_err_exp.iterrows():
                             r_vals = [(row[c] / max_vals[c]) for c in sel_y_cols]
-                            r_vals.append(r_vals[0]) # close loop
+                            r_vals.append(r_vals[0])
                             theta_vals = sel_y_keys + [sel_y_keys[0]]
                             fig_r.add_trace(go.Scatterpolar(r=r_vals, theta=theta_vals, fill="toself", name=row["legend_name"], line_color=row["color_hex"]))
 
@@ -2465,12 +2498,11 @@ if trigger_export_btn:
                         zf.writestr(f"{safe_conf_name}-Oekonomie_Radar.pdf", fig_r.to_image(format="pdf"))
 
                 # --- EXPORT 3: DETAILS (L1, L2, L3) ---
-                # Das wird weiterhin berechnet, da man nicht alle 3 gleichzeitig sieht
                 if "Detail-Phasen (Tab 1)" in export_selection:
                     for ph in PHASES:
                         fig_s = create_single_phase_figure(
-                            df_sub, ph, acc_class, y_limit, y_shift, bottom_plot_mode, 
-                            show_err_bars, title_prefix=f"{current_title_str}", 
+                            df_sub, ph, acc_class, y_limit, y_shift, bottom_plot_mode,
+                            show_err_bars, title_prefix=f"{current_title_str}",
                             nticks_x=nticks_x, nticks_y=nticks_y
                         )
                         zf.writestr(
@@ -2492,13 +2524,9 @@ if "zip_data" in st.session_state:
 
 
 # =======================================================
-# --- SPEICHER-LOGIK (GANZ UNTEN, DAMIT ÄNDERUNGEN DA SIND) ---
+# --- SPEICHER-LOGIK ---
 # =======================================================
 if st.session_state.get("trigger_save", False):
-    # Jetzt greifen wir auf die Variablen zu, die im Skriptverlauf (Editor) erstellt wurden.
-    # Falls der Editor ausgeblendet war, nehmen wir Fallback-Werte aus dem State.
-    
-    # Sicherstellen, dass die Maps existieren (falls der User den Expander nie geöffnet hat)
     current_colors = map_color if 'map_color' in locals() else st.session_state.get("loaded_colors", {})
     current_legends = map_legend if 'map_legend' in locals() else st.session_state.get("loaded_legends", {})
     current_styles = map_style if 'map_style' in locals() else st.session_state.get("loaded_styles", {})
@@ -2506,8 +2534,6 @@ if st.session_state.get("trigger_save", False):
     current_widths = map_width if 'map_width' in locals() else st.session_state.get("loaded_widths", {})
     current_visible = map_visible if 'map_visible' in locals() else st.session_state.get("loaded_visible", {})
     current_sizes = map_size if 'map_size' in locals() else st.session_state.get("loaded_sizes", {})
-    
-    # Titel-Editor Map prüfen
     current_titles = TITLES_MAP if 'TITLES_MAP' in locals() else st.session_state.get("loaded_titles", {})
 
     snapshot_data = {
@@ -2522,8 +2548,6 @@ if st.session_state.get("trigger_save", False):
         "acc_class": st.session_state.get("k_class", 0.2),
         "show_err_bars": st.session_state.get("k_errbars", True),
         "bottom_plot_mode": st.session_state.get("k_bottom_mode", "Standardabweichung"),
-        
-        # HIER NEHMEN WIR JETZT DIE LIVE-DATEN
         "custom_colors": current_colors,
         "custom_legends": current_legends,
         "custom_styles": current_styles,
@@ -2532,21 +2556,17 @@ if st.session_state.get("trigger_save", False):
         "custom_visible": current_visible,
         "custom_sizes": current_sizes,
         "custom_titles": current_titles,
-        
         "eco_x": st.session_state.get("k_eco_x", "Preis (€)"),
         "eco_y": st.session_state.get("k_eco_y", ["Fehler Nennstrom"]),
         "eco_type": st.session_state.get("k_eco_type", "Scatter")
     }
-    
+
     save_name = st.session_state["save_name"]
     save_dashboard_config(save_name, snapshot_data)
     st.session_state["trigger_save"] = False
-    
-    # Wichtig: State aktualisieren, damit beim Rerun die neuen Farben auch geladen bleiben
+
     st.session_state["loaded_colors"] = current_colors
     st.session_state["loaded_legends"] = current_legends
-    # ... (restliche update ich hier implizit durch Rerun, aber colors ist wichtig)
-    
+
     st.toast(f"Konfiguration '{save_name}' erfolgreich gespeichert!", icon="💾")
-    # Kurze Pause oder Rerun, damit die UI sich aktualisiert
     st.rerun()

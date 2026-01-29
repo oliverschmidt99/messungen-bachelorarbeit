@@ -131,15 +131,15 @@
         "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "#8bbce9"
       },
       "custom_legends": {
-        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 8,1 Ω | Parallel (2000A)",
-        "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 0,0 Ω | Parallel (2000A)",
-        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | Pruefling | 1,35 Ω | Parallel (2000A)",
-        "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | Pruefling | 8,1 Ω | Parallel (2000A)",
-        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 8,1 Ω | Dreieck (2000A)",
-        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | Pruefling": "MBS ASK101.4 | Pruefling | 8,1 Ω | Dreieck (2000A)",
-        "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | Pruefling | 1,35 Ω | Dreieck (2000A)",
-        "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 0,0 Ω | Dreieck (2000A)",
-        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | Pruefling | 8,1 Ω | Dreieck (2000A)"
+        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 8,1 $\Omega$ | Parallel (2000A)",
+        "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 0,0 $\Omega$ | Parallel (2000A)",
+        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | Pruefling | 1,35 $\Omega$ | Parallel (2000A)",
+        "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | Pruefling | 8,1 $\Omega$ | Parallel (2000A)",
+        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 8,1 $\Omega$ | Dreieck (2000A)",
+        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | Pruefling": "MBS ASK101.4 | Pruefling | 8,1 $\Omega$ | Dreieck (2000A)",
+        "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | Pruefling | 1,35 $\Omega$ | Dreieck (2000A)",
+        "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 0,0 $\Omega$ | Dreieck (2000A)",
+        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | Pruefling | 8,1 $\Omega$ | Dreieck (2000A)"
       },
       "custom_titles": {
         "Gesamtübersicht (Tab 1)": "4000 A | Fehlerkurve | Celsa",
@@ -188,10 +188,10 @@
         "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "#00AAFF"
       },
       "custom_legends": {
-        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "MBS ASK101.4 | PAC2 | 8,1 Ω | Parallel | 0 (2000A)",
-        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 8,1 Ω | Parallel (2000A)",
-        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | Pruefling | 1,35 Ω | Parallel (2000A)",
-        "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | Pruefling | 8,1 Ω | Parallel (2000A)"
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "MBS ASK101.4 | PAC2 | 8,1 $\Omega$ | Parallel | 0 (2000A)",
+        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 8,1 $\Omega$ | Parallel (2000A)",
+        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | Pruefling | 1,35 $\Omega$ | Parallel (2000A)",
+        "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | Pruefling | 8,1 $\Omega$ | Parallel (2000A)"
       },
       "custom_styles": {
         "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "solid",
@@ -255,10 +255,10 @@
         "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "#00AAFF   "
       },
       "custom_legends": {
-        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 8,1 Ω | Dreieck (2000A)",
-        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | Pruefling": "MBS ASK101.4 | Pruefling | 8,1 Ω | Dreieck (2000A)",
-        "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | Pruefling | 1,35 Ω | Dreieck (2000A)",
-        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | Pruefling | 8,1 Ω | Dreieck (2000A)"
+        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | Pruefling | 8,1 $\Omega$ | Dreieck (2000A)",
+        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | Pruefling": "MBS ASK101.4 | Pruefling | 8,1 $\Omega$ | Dreieck (2000A)",
+        "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | Pruefling | 1,35 $\Omega$ | Dreieck (2000A)",
+        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | Pruefling | 8,1 $\Omega$ | Dreieck (2000A)"
       },
       "custom_styles": {
         "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "solid",
@@ -322,11 +322,11 @@
         "2025_12_11_0912-Celsa-ALO_10030-2500A-1R35_sortiert.csv | Pruefling": "#4a8fd1"
       },
       "custom_legends": {
-        "2025_12_11_0812-Celsa-ALO_10030-2500A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | 2500 A | 1,35 Ω | Parallel",
-        "2025_12_10_1533-Celsa-ALO_10050_K-2500A-2R8_sortiert.csv | Pruefling": "Celsa ALO 10050 K | 2500 A | 2,8 Ω | Parallel",
-        "2025_12_09_1332-Celsa-ALO_10050_K-2500A-2R8_sortiert.csv | Pruefling": "Celsa ALO 10050 K | 2500 A | 2,8 Ω | Dreieck ",
-        "2025_12_09_1535-Celsa-ALO_10030-2500A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | 2500 A | 1,35 Ω | Dreieck",
-        "2025_12_11_0912-Celsa-ALO_10030-2500A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | 2500 A | 1,35 Ω | Parallel | Extra-Messung mit Alu (2500A)"
+        "2025_12_11_0812-Celsa-ALO_10030-2500A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | 2500 A | 1,35 $\Omega$ | Parallel",
+        "2025_12_10_1533-Celsa-ALO_10050_K-2500A-2R8_sortiert.csv | Pruefling": "Celsa ALO 10050 K | 2500 A | 2,8 $\Omega$ | Parallel",
+        "2025_12_09_1332-Celsa-ALO_10050_K-2500A-2R8_sortiert.csv | Pruefling": "Celsa ALO 10050 K | 2500 A | 2,8 $\Omega$ | Dreieck ",
+        "2025_12_09_1535-Celsa-ALO_10030-2500A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | 2500 A | 1,35 $\Omega$ | Dreieck",
+        "2025_12_11_0912-Celsa-ALO_10030-2500A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | 2500 A | 1,35 $\Omega$ | Parallel | Extra-Messung mit Alu (2500A)"
       },
       "custom_styles": {
         "2025_12_11_0812-Celsa-ALO_10030-2500A-1R35_sortiert.csv | Pruefling": "solid",
@@ -408,11 +408,11 @@
         "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | Pruefling": "#ff8400   "
       },
       "custom_legends": {
-        "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | Pruefling": "Celsa ALO 12070 K | 3000 A | 10,8 Ω | Parallel",
-        "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | Pruefling": "Celsa ALO 12070 | Pruefling | 10,8 Ω | Parallel | L2_0_sortiert (3000A)",
-        "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | Pruefling": "Celsa ALO 12070 | 3000 A | 10,8 Ω | Parallel",
-        "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8_sortiert.csv | Pruefling": "Celsa ALO 12070 | 3000 A | 10,8 Ω | Dreieck",
-        "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | Pruefling": "Celsa ALO 12070 K | 3000 A | 10,8 Ω | Dreieck"
+        "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | Pruefling": "Celsa ALO 12070 K | 3000 A | 10,8 $\Omega$ | Parallel",
+        "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | Pruefling": "Celsa ALO 12070 | Pruefling | 10,8 $\Omega$ | Parallel | L2_0_sortiert (3000A)",
+        "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | Pruefling": "Celsa ALO 12070 | 3000 A | 10,8 $\Omega$ | Parallel",
+        "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8_sortiert.csv | Pruefling": "Celsa ALO 12070 | 3000 A | 10,8 $\Omega$ | Dreieck",
+        "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | Pruefling": "Celsa ALO 12070 K | 3000 A | 10,8 $\Omega$ | Dreieck"
       },
       "custom_styles": {
         "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | Pruefling": "solid",
@@ -495,10 +495,10 @@
         "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | Pruefling": "#ff8400   "
       },
       "custom_legends": {
-        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 12070 | 4000 A | 10,8 Ω | Parallel ",
-        "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 12070 K | 4000 A | 10,8 Ω | Parallel ",
-        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO 12070 K | 4000 A | 10,8 Ω | Dreieck ",
-        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 12070 | 4000 A | 10,8 Ω | Dreieck "
+        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 12070 | 4000 A | 10,8 $\Omega$ | Parallel ",
+        "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 12070 K | 4000 A | 10,8 $\Omega$ | Parallel ",
+        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO 12070 K | 4000 A | 10,8 $\Omega$ | Dreieck ",
+        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 12070 | 4000 A | 10,8 $\Omega$ | Dreieck "
       },
       "custom_styles": {
         "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | Pruefling": "solid",
@@ -583,14 +583,14 @@
         "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "#00a42f"
       },
       "custom_legends": {
-        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "MBS ASK101.4 | PAC2 | 8,1 Ω | Parallel",
-        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | 2000 A | 8,1 Ω | Parallel",
-        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | 2000 A | 1,35 Ω | Parallel",
-        "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | 2000 A | 8,1 Ω | Parallel",
-        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | 2000 A | 8,1 Ω | Dreieck",
-        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | Pruefling": "MBS ASK101.4 | 2000 A | 8,1 Ω | Dreieck",
-        "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | 2000 A | 1,35 Ω | Dreieck",
-        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | 2000 A | 8,1 Ω | Dreieck"
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "MBS ASK101.4 | PAC2 | 8,1 $\Omega$ | Parallel",
+        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | 2000 A | 8,1 $\Omega$ | Parallel",
+        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | 2000 A | 1,35 $\Omega$ | Parallel",
+        "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | 2000 A | 8,1 $\Omega$ | Parallel",
+        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | Pruefling": "Redur 13A1030.3ffp | 2000 A | 8,1 $\Omega$ | Dreieck",
+        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | Pruefling": "MBS ASK101.4 | 2000 A | 8,1 $\Omega$ | Dreieck",
+        "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | Pruefling": "Celsa ALO 10030 | 2000 A | 1,35 $\Omega$ | Dreieck",
+        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | Pruefling": "Celsa ALO 8030 K | 2000 A | 8,1 $\Omega$ | Dreieck"
       },
       "custom_styles": {
         "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "solid",
@@ -692,13 +692,13 @@
         "2025_12_11_1500-Redur-20A1456.5vffp-5000A-8R1_sortiert.csv | Pruefling": "#FF7100"
       },
       "custom_legends": {
-        "2025_12_15_0912-Redur-20A1456.5vffp-5000A-0R0_sortiert.csv | Pruefling": "Redur 20A1456.5vffp | 5000 A | 0,0 Ω | Parallel",
-        "2025_12_12_1406-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 20060 | 5000 A | 0,0 Ω | Parallel",
-        "2025_12_15_0812-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO E 16050 K | 5000 A | 0,0 Ω | Parallel",
-        "2025_12_12_1206-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 20060 | 5000 A | 0,0 Ω | Dreieck",
-        "2025_12_12_1020-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO E 16050 K | 5000 A | 0,0 Ω | Dreieck",
-        "2025_12_12_0820-MBS-ASK129.10-5000A-10R8_sortiert.csv | Pruefling": "MBS ASK129.10 | 5000 A | 10,8 Ω | Dreieck",
-        "2025_12_11_1500-Redur-20A1456.5vffp-5000A-8R1_sortiert.csv | Pruefling": "Redur 20A1456.5vffp | 5000 A | 8,1 Ω | Dreieck"
+        "2025_12_15_0912-Redur-20A1456.5vffp-5000A-0R0_sortiert.csv | Pruefling": "Redur 20A1456.5vffp | 5000 A | 0,0 $\Omega$ | Parallel",
+        "2025_12_12_1406-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 20060 | 5000 A | 0,0 $\Omega$ | Parallel",
+        "2025_12_15_0812-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO E 16050 K | 5000 A | 0,0 $\Omega$ | Parallel",
+        "2025_12_12_1206-Celsa-ALO_20060-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO 20060 | 5000 A | 0,0 $\Omega$ | Dreieck",
+        "2025_12_12_1020-Celsa-ALO_E_16050_K-5000A-0R0_sortiert.csv | Pruefling": "Celsa ALO E 16050 K | 5000 A | 0,0 $\Omega$ | Dreieck",
+        "2025_12_12_0820-MBS-ASK129.10-5000A-10R8_sortiert.csv | Pruefling": "MBS ASK129.10 | 5000 A | 10,8 $\Omega$ | Dreieck",
+        "2025_12_11_1500-Redur-20A1456.5vffp-5000A-8R1_sortiert.csv | Pruefling": "Redur 20A1456.5vffp | 5000 A | 8,1 $\Omega$ | Dreieck"
       },
       "custom_styles": {
         "2025_12_15_0912-Redur-20A1456.5vffp-5000A-0R0_sortiert.csv | Pruefling": "solid",
