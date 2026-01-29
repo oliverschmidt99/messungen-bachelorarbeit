@@ -9,45 +9,71 @@
         "Messstrecke"
       ],
       "wandlers": [
-        "Celsa ALO 12070 0R0",
-        "Referenz Messstrecke Unbekannt"
+        "Messstrecke 2026_01_07-Messstrecke-4000A-0R0"
       ],
       "duts": [
-        "Rogowsikeinspeisung",
         "K3",
-        "PAC1"
+        "PAC1",
+        "Rogowsikeinspeisung"
       ],
       "comp_mode": "Nennwert (Ideal)",
       "sync_axes": true,
-      "y_limit": 2.7,
+      "y_limit": 6.5,
+      "y_shift": -0.5,
       "acc_class": 0.2,
       "show_err_bars": true,
+      "bottom_plot_mode": "Standardabweichung",
       "custom_colors": {
-        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "#1212A1",
-        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": "#CC2979",
-        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "#5AA112"
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": "#CB2879",
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "#5AA112",
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "#1313BD"
       },
       "custom_legends": {
-        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "Rogowski-Spulen | Kl. 0,2",
         "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": "PAC 4220 | Celsa ICG 6000/5 Kl. 0,2S",
-        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "K-3 | Celsa ICG 6000/5 Kl. 0,2S"
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "K-3 | Celsa ICG 6000/5 Kl. 0,2S",
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "Rogowski-Spulen | Kl. 0,2"
+      },
+      "custom_styles": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": "solid",
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "solid",
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "solid"
+      },
+      "custom_symbols": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": "diamond",
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "circle",
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "circle"
+      },
+      "custom_widths": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": 1.0,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": 1.0,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": 1.0
+      },
+      "custom_visible": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": true,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": true,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": true
+      },
+      "custom_sizes": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": 8,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": 8,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": 8
       },
       "custom_titles": {
-        "Gesamtübersicht (Tab 1)": "4000 A | Messabweichung und Standardabweichung | Neuer Versuchsaufbau",
+        "Gesamtübersicht (Tab 1)": "4000 A | Messabweichung und Standardabweichung | Vorheriger Versuchsaufbau",
         "Scatter-Plot": "Kosten-Nutzen-Analyse",
-        "Performance-Index": "4000 A | Performance Index | Neuer Versuchsaufbau",
+        "Performance-Index": "4000 A | Performance Index | Vorheriger Versuchsaufbau",
         "Heatmap": "Fehler-Heatmap",
         "Boxplot": "Fehlerverteilung (Boxplot)",
         "Pareto": "Pareto-Analyse",
         "Radar": "Radar-Profil"
       },
-      "eco_x": "Preis (€)",
+      "eco_x": "Volumen (dm³)",
       "eco_y": [
         "Fehler Niederstrom",
         "Fehler Nennstrom",
         "Fehler Überlast"
       ],
-      "eco_type": "Performance-Index"
+      "eco_type": "Radar"
     },
     "dia_messstrecke_alt": {
       "current": [
@@ -58,25 +84,54 @@
         "Messstrecke"
       ],
       "wandlers": [
-        "Celsa ALO 12070 0R0",
-        "Referenz Messstrecke Unbekannt"
+        "Messstrecke 2026_01_07-Messstrecke-4000A-0R0"
       ],
       "duts": [
-        "Rogowsikeinspeisung",
-        "K3"
+        "K3",
+        "PAC1",
+        "Rogowsikeinspeisung"
       ],
       "comp_mode": "Nennwert (Ideal)",
       "sync_axes": true,
-      "y_limit": 2.7,
+      "y_limit": 6.5,
+      "y_shift": -0.5,
       "acc_class": 0.2,
       "show_err_bars": true,
+      "bottom_plot_mode": "Standardabweichung",
       "custom_colors": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": "#CB2879",
         "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "#5AA112",
         "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "#1313BD"
       },
       "custom_legends": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": "PAC 4220 | Celsa ICG 6000/5 Kl. 0,2S",
         "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "K-3 | Celsa ICG 6000/5 Kl. 0,2S",
         "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "Rogowski-Spulen | Kl. 0,2"
+      },
+      "custom_styles": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": "solid",
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "solid",
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "solid"
+      },
+      "custom_symbols": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": "diamond",
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": "circle",
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": "circle"
+      },
+      "custom_widths": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": 1.0,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": 1.0,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": 1.0
+      },
+      "custom_visible": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": false,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": true,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": true
+      },
+      "custom_sizes": {
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | PAC1": 8,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | K3": 8,
+        "2026_01_07-Messstrecke-4000A-0R0_sortiert.csv | Rogowsikeinspeisung": 8
       },
       "custom_titles": {
         "Gesamtübersicht (Tab 1)": "4000 A | Messabweichung und Standardabweichung | Vorheriger Versuchsaufbau",
@@ -263,7 +318,9 @@
       },
       "eco_x": "Volumen (dm³)",
       "eco_y": [
-        "Fehler Nennstrom"
+        "Fehler Nennstrom",
+        "Fehler Niederstrom",
+        "Fehler Überlast"
       ],
       "eco_type": "Scatter"
     },
@@ -344,7 +401,9 @@
       },
       "eco_x": "Volumen (dm³)",
       "eco_y": [
-        "Fehler Nennstrom"
+        "Fehler Nennstrom",
+        "Fehler Niederstrom",
+        "Fehler Überlast"
       ],
       "eco_type": "Scatter"
     },
@@ -358,9 +417,9 @@
       ],
       "wandlers": [
         "Celsa 2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0",
-        "Celsa 2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0",
+        "Celsa 2025_12_16_1020-Celsa-ALO_12070-4000A-0R0",
         "Celsa 2025_12_16_1140-Celsa-ALO_12070-4000A-0R0",
-        "Celsa 2025_12_16_1020-Celsa-ALO_12070-4000A-0R0"
+        "Celsa 2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0"
       ],
       "duts": [
         "PAC2"
@@ -540,7 +599,9 @@
       },
       "eco_x": "Volumen (dm³)",
       "eco_y": [
-        "Fehler Nennstrom"
+        "Fehler Niederstrom",
+        "Fehler Nennstrom",
+        "Fehler Überlast"
       ],
       "eco_type": "Scatter"
     },

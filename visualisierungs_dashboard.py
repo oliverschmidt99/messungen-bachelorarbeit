@@ -2319,25 +2319,150 @@ if trigger_export_btn:
                     else:
                         st.warning("⚠️ Gesamtübersicht noch nicht geladen (bitte Tab 1 einmal öffnen).")
 
-                # --- EXPORT 2: ÖKONOMIE (SNAPSHOT) ---
-                # Wir prüfen, ob das gewünschte Diagramm gerade sichtbar ist
-                for eco_req in export_selection:
-                    if "Ökonomie" in eco_req:
-                        current_type = st.session_state.get("fig_snapshot_tab2_type", "")
-                        
-                        # Nur exportieren, wenn es exakt das ist, was wir sehen
-                        if current_type == eco_req and "fig_snapshot_tab2" in st.session_state:
-                            fig_eco_snap = st.session_state["fig_snapshot_tab2"]
-                            fig_eco_snap.update_layout(width=1123, height=794)
-                            
-                            filename_part = eco_req.replace("Ökonomie: ", "").replace(" ", "_")
-                            zf.writestr(
-                                f"{safe_conf_name}-Oekonomie_{filename_part}.pdf",
-                                fig_eco_snap.to_image(format="pdf")
-                            )
-                        elif "Ökonomie" in eco_req:
-                            # Falls der Nutzer etwas angehakt hat, was er gerade NICHT sieht:
-                            pass # Wir ignorieren es, um 1:1 Konsistenz zu wahren (oder Warnung ausgeben)
+               # --- EXPORT 2: ÖKONOMIE (DYNAMISCHE NEUBERECHNUNG) ---
+                # Wir berechnen die Diagramme neu, damit sie immer aktuell sind, egal welcher Tab offen ist.
+                eco_requests = [s for s in export_selection if "Ökonomie" in s]
+
+                if eco_requests and not df_sub.empty:
+                    # A) Daten aggregieren (Kopie der Logik aus Tab 2)
+                    df_err_exp = (
+                        df_sub.groupby("unique_id")
+                        .agg(
+                            wandler_key=("wandler_key", "first"),
+                            legend_name=("final_legend", "first"),
+                            err_nieder=("err_ratio", lambda x: x[df_sub.loc[x.index, "target_load"].isin(ZONES["Niederstrom (5-50%)"])].abs().mean()),
+                            err_nom=("err_ratio", lambda x: x[df_sub.loc[x.index, "target_load"].isin(ZONES["Nennstrom (80-100%)"])].abs().mean()),
+                            err_high=("err_ratio", lambda x: x[df_sub.loc[x.index, "target_load"].isin(ZONES["Überlast (≥120%)"])].abs().mean()),
+                            preis=("Preis (€)", "first"),
+                            vol_t=("T (mm)", "first"),
+                            vol_b=("B (mm)", "first"),
+                            vol_h=("H (mm)", "first"),
+                            color_hex=("final_color", "first"),
+                        )
+                        .reset_index()
+                    )
+                    df_err_exp["volumen"] = (df_err_exp["vol_t"] * df_err_exp["vol_b"] * df_err_exp["vol_h"]) / 1000.0
+
+                    # Mapping Definitionen (Lokal für Export)
+                    Y_OPT_EXP = {
+                        "Fehler Niederstrom": "err_nieder", "Fehler Nennstrom": "err_nom",
+                        "Fehler Überlast": "err_high", "Preis (€)": "preis",
+                        "Volumen (Gesamt)": "volumen", "Breite (B)": "vol_b",
+                        "Höhe (H)": "vol_h", "Tiefe (T)": "vol_t",
+                    }
+                    REV_Y_EXP = {v: k for k, v in Y_OPT_EXP.items()}
+
+                    # Einstellungen aus Session State holen (damit Export zur Sidebar passt)
+                    sel_y_keys = st.session_state.get("k_eco_y", ["Fehler Nennstrom"])
+                    sel_y_cols = [Y_OPT_EXP[k] for k in sel_y_keys if k in Y_OPT_EXP]
+                    sel_x_key = st.session_state.get("k_eco_x", "Preis (€)")
+                    col_x_exp = "preis" if "Preis" in sel_x_key else "volumen"
+
+                    color_map_exp = dict(zip(df_err_exp["legend_name"], df_err_exp["color_hex"]))
+
+                    # B) Diagramme generieren & Speichern
+
+                    # 1. SCATTER
+                    if "Ökonomie: Scatter-Plot" in export_selection:
+                        title_str = TITLES_MAP.get("Scatter-Plot", f"{sel_x_key} vs. Auswahl")
+                        df_long = df_err_exp.melt(id_vars=["unique_id", "legend_name", col_x_exp, "color_hex"], value_vars=sel_y_cols, var_name="Metrik_Intern", value_name="Wert")
+                        df_long["Metrik"] = df_long["Metrik_Intern"].map(REV_Y_EXP)
+
+                        fig_eco = px.scatter(
+                            df_long, x=col_x_exp, y="Wert", color="legend_name", symbol="Metrik",
+                            size=[15] * len(df_long), color_discrete_map=color_map_exp, title=title_str
+                        )
+                        fig_eco.update_layout(template="plotly_white", width=1123, height=794, font=dict(family="Serif", size=14, color="black"), legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"))
+                        zf.writestr(f"{safe_conf_name}-Oekonomie_Scatter.pdf", fig_eco.to_image(format="pdf"))
+
+                    # 2. PERFORMANCE INDEX (RANKING)
+                    if "Ökonomie: Performance-Index" in export_selection:
+                        title_str = TITLES_MAP.get("Performance-Index", "Performance Index")
+                        df_rank = df_err_exp.copy()
+                        df_rank["total_score"] = 0.0
+                        norm_cols = []
+                        for label in sel_y_keys:
+                            if label in Y_OPT_EXP:
+                                raw_c = Y_OPT_EXP[label]
+                                mx = df_rank[raw_c].abs().max()
+                                if mx == 0: mx = 1
+                                df_rank[label] = (df_rank[raw_c].abs() / mx) * 100
+                                df_rank["total_score"] += df_rank[label]
+                                norm_cols.append(label)
+
+                        df_rank = df_rank.sort_values("total_score", ascending=True)
+                        df_long = df_rank.melt(id_vars=["legend_name"], value_vars=norm_cols, var_name="Kategorie", value_name="Anteil (%)")
+
+                        # HIER WURDE 'color_discrete_sequence' HINZUGEFÜGT
+                        fig_eco = px.bar(
+                            df_long,
+                            y="legend_name",
+                            x="Anteil (%)",
+                            color="Kategorie",
+                            orientation="h",
+                            title=title_str,
+                            color_discrete_sequence=px.colors.qualitative.Safe
+                        )
+
+                        fig_eco.update_layout(
+                            yaxis=dict(autorange="reversed"),
+                            template="plotly_white",
+                            width=1123,
+                            height=794,
+                            font=dict(family="Serif", size=14, color="black"),
+                            legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center")
+                        )
+                        zf.writestr(f"{safe_conf_name}-Oekonomie_Ranking.pdf", fig_eco.to_image(format="pdf"))
+
+                    # 3. HEATMAP
+                    if "Ökonomie: Heatmap" in export_selection:
+                        title_str = TITLES_MAP.get("Heatmap", "Heatmap")
+                        df_long = df_err_exp.melt(id_vars=["legend_name"], value_vars=sel_y_cols, var_name="Kategorie_Intern", value_name="Wert")
+                        df_long["Kategorie"] = df_long["Kategorie_Intern"].map(REV_Y_EXP)
+                        fig_eco = px.density_heatmap(df_long, x="legend_name", y="Kategorie", z="Wert", text_auto=True, color_continuous_scale="Blues", title=title_str)
+                        fig_eco.update_layout(template="plotly_white", width=1123, height=794, font=dict(family="Serif", size=14, color="black"))
+                        zf.writestr(f"{safe_conf_name}-Oekonomie_Heatmap.pdf", fig_eco.to_image(format="pdf"))
+
+                    # 4. BOXPLOT
+                    if "Ökonomie: Boxplot" in export_selection:
+                        title_str = TITLES_MAP.get("Boxplot", "Verteilung")
+                        df_long = df_err_exp.melt(id_vars=["legend_name"], value_vars=sel_y_cols, var_name="Kategorie_Intern", value_name="Wert")
+                        df_long["Kategorie"] = df_long["Kategorie_Intern"].map(REV_Y_EXP)
+                        fig_eco = px.box(df_long, x="legend_name", y="Wert", color="Kategorie", title=title_str)
+                        fig_eco.update_layout(template="plotly_white", width=1123, height=794, font=dict(family="Serif", size=14, color="black"), legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"))
+                        zf.writestr(f"{safe_conf_name}-Oekonomie_Boxplot.pdf", fig_eco.to_image(format="pdf"))
+
+                    # 5. PARETO
+                    if "Ökonomie: Pareto" in export_selection and sel_y_cols:
+                        title_str = TITLES_MAP.get("Pareto", "Pareto")
+                        target_y = sel_y_cols[0]
+                        target_lbl = sel_y_keys[0]
+                        df_srt = df_err_exp.sort_values(by=target_y, ascending=False)
+                        df_srt["cum_pct"] = df_srt[target_y].cumsum() / df_srt[target_y].sum() * 100
+
+                        fig_par = make_subplots(specs=[[{"secondary_y": True}]])
+                        fig_par.add_trace(go.Bar(x=df_srt["legend_name"], y=df_srt[target_y], name=target_lbl, marker_color=df_srt["color_hex"]), secondary_y=False)
+                        fig_par.add_trace(go.Scatter(x=df_srt["legend_name"], y=df_srt["cum_pct"], name="Kumulativ %", mode="lines+markers", line=dict(color="red")), secondary_y=True)
+                        fig_par.update_layout(title=title_str, template="plotly_white", width=1123, height=794, font=dict(family="Serif", size=14, color="black"), legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"))
+                        zf.writestr(f"{safe_conf_name}-Oekonomie_Pareto.pdf", fig_par.to_image(format="pdf"))
+
+                    # 6. RADAR
+                    if "Ökonomie: Radar" in export_selection:
+                        title_str = TITLES_MAP.get("Radar", "Radar")
+                        fig_r = go.Figure()
+                        max_vals = {}
+                        for cn in sel_y_cols:
+                            m = df_err_exp[cn].max()
+                            max_vals[cn] = m if m != 0 else 1
+
+                        for i, row in df_err_exp.iterrows():
+                            r_vals = [(row[c] / max_vals[c]) for c in sel_y_cols]
+                            r_vals.append(r_vals[0]) # close loop
+                            theta_vals = sel_y_keys + [sel_y_keys[0]]
+                            fig_r.add_trace(go.Scatterpolar(r=r_vals, theta=theta_vals, fill="toself", name=row["legend_name"], line_color=row["color_hex"]))
+
+                        fig_r.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 1])), title=title_str, template="plotly_white", width=1123, height=794, font=dict(family="Serif", size=14, color="black"), legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"))
+                        zf.writestr(f"{safe_conf_name}-Oekonomie_Radar.pdf", fig_r.to_image(format="pdf"))
 
                 # --- EXPORT 3: DETAILS (L1, L2, L3) ---
                 # Das wird weiterhin berechnet, da man nicht alle 3 gleichzeitig sieht
