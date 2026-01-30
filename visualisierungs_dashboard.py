@@ -1581,6 +1581,92 @@ with tab1:
     st.plotly_chart(fig_main, use_container_width=True)
     st.session_state["fig_snapshot_tab1"] = fig_main
 
+# --- NEU: Detaillierte Tabelle mit korrekter Spalten-Beschriftung (Tab 1) ---
+    st.markdown("---")
+
+    # 1. Gewünschte Lastpunkte (als Integer)
+    LOAD_POINTS = [5, 20, 50, 80, 90, 100, 120]
+
+    # 2. Daten filtern und Typ erzwingen (Wichtig: int casting für saubere Spalten)
+    df_points = df_sub[df_sub["target_load"].isin(LOAD_POINTS)].copy()
+    
+    if not df_points.empty:
+        df_points["target_load"] = df_points["target_load"].astype(int)
+
+        # Pivotieren: Spalten werden zu 5, 20, 100... (Integer)
+        df_pivot = df_points.pivot_table(
+            index=["unique_id", "final_legend", "phase"],
+            columns="target_load",
+            values="err_ratio"
+        ).reset_index()
+
+        # 3. Metadaten dazu holen
+        df_meta = df_sub.groupby("unique_id").agg({
+            "Preis (€)": "first",
+            "T (mm)": "first",
+            "B (mm)": "first",
+            "H (mm)": "first"
+        }).reset_index()
+        df_meta["volumen"] = (df_meta["T (mm)"] * df_meta["B (mm)"] * df_meta["H (mm)"]) / 1000.0
+
+        df_final_t1 = pd.merge(df_pivot, df_meta, on="unique_id", how="left")
+
+        # 4. Performance Index berechnen (auf den numerischen Spalten)
+        df_final_t1["total_score"] = 0.0
+        # Wir prüfen, welche der LOAD_POINTS als Spalte existieren
+        existing_numeric_cols = [c for c in LOAD_POINTS if c in df_final_t1.columns]
+        
+        for col in existing_numeric_cols:
+            mx = df_final_t1[col].abs().max()
+            if mx == 0: mx = 1.0
+            df_final_t1["total_score"] += (df_final_t1[col].abs() / mx) * 100
+
+        # 5. UMBENENNUNG DER SPALTEN (Fix für die falsche Anzeige)
+        # Wir benennen die Zahl-Spalten (100) in Strings ("100% In") um.
+        rename_map = {c: f"{c}% In" for c in existing_numeric_cols}
+        df_final_t1.rename(columns=rename_map, inplace=True)
+        
+        # Liste der neuen String-Spalten in korrekter Reihenfolge
+        display_cols_points = [rename_map[c] for c in existing_numeric_cols]
+
+        # 6. Konfiguration erstellen
+        col_config = {
+            "final_legend": "Variante",
+            "phase": "Phase",
+            "total_score": st.column_config.ProgressColumn(
+                "Performance Index",
+                help="Summierte Abweichung (Niedriger ist besser)",
+                format="%.1f",
+                min_value=0,
+                max_value=float(df_final_t1["total_score"].max()) if not df_final_t1.empty else 100,
+            ),
+            "Preis (€)": st.column_config.NumberColumn("Preis", format="%.2f €"),
+            "volumen": st.column_config.NumberColumn("Volumen", format="%.2f dm³"),
+        }
+
+        # Formatierung für die neuen String-Spalten (z.B. "100% In") hinzufügen
+        for col_name in display_cols_points:
+            col_config[col_name] = st.column_config.NumberColumn(
+                col_name,       # Name fixieren
+                format="%.3f %%" # 3 Nachkommastellen
+            )
+
+        # 7. Tabelle anzeigen
+        with st.expander("🔢 Detaillierte Datentabelle (Stützstellen)", expanded=True):
+            # Exakte Reihenfolge der Spalten definieren
+            cols_order = ["final_legend", "phase"] + display_cols_points + ["total_score", "Preis (€)", "volumen"]
+            
+            # Nur Spalten nehmen, die wirklich da sind
+            final_cols_to_show = [c for c in cols_order if c in df_final_t1.columns]
+
+            st.dataframe(
+                df_final_t1[final_cols_to_show],
+                use_container_width=True,
+                column_config=col_config,
+                hide_index=True
+            )
+    else:
+        st.info("Keine Daten an den Stützstellen gefunden.")
 
 with tab2:
     st.markdown("### 💰 Ökonomische Analyse & Varianten-Vergleich")
@@ -1914,11 +2000,57 @@ with tab2:
 
     # --- UNTERER BEREICH: DATENTABELLE ---
     with st.expander("🔢 Detaillierte Datentabelle ansehen"):
+        # Lokale Kopie für die Anzeige
+        df_table = df_err.copy()
+
+        # Sicherstellen, dass der Score (Performance Index) berechnet ist,
+        # auch wenn man nicht auf dem "Ranking"-Tab war
+        if "total_score" not in df_table.columns:
+            df_table["total_score"] = 0.0
+            for label in y_selection:
+                raw_col = Y_OPTIONS_MAP.get(label)
+                if raw_col and raw_col in df_table.columns:
+                    mx_val = df_table[raw_col].abs().max()
+                    if mx_val == 0:
+                        mx_val = 1.0
+                    df_table["total_score"] += (df_table[raw_col].abs() / mx_val) * 100
+
+        # Unnötige Spalten entfernen
+        df_display = df_table.drop(
+            columns=["color_hex", "vol_t", "vol_b", "vol_h", "wandler_key"],
+            errors="ignore",
+        )
+
+        # Tabelle mit Formatierung (Column Config) anzeigen
         st.dataframe(
-            df_err.drop(
-                columns=["color_hex", "vol_t", "vol_b", "vol_h", "wandler_key"]
-            ),
+            df_display,
             use_container_width=True,
+            column_config={
+                "err_nom": st.column_config.NumberColumn(
+                    "Genauigkeit (Nenn) %",
+                    help="Mittlerer Fehler im Nennbereich (80-100%)",
+                    format="%.3f %%",  # 3 Nachkommastellen + Prozentzeichen
+                ),
+                "err_nieder": st.column_config.NumberColumn(
+                    "Genauigkeit (Nieder) %", format="%.3f %%"
+                ),
+                "err_high": st.column_config.NumberColumn(
+                    "Genauigkeit (Überlast) %", format="%.3f %%"
+                ),
+                "total_score": st.column_config.ProgressColumn(
+                    "Performance Index",
+                    help="Niedriger ist besser (Berechnet aus gewählten Metriken)",
+                    format="%.1f",
+                    min_value=0,
+                    max_value=(
+                        float(df_display["total_score"].max())
+                        if not df_display.empty
+                        else 100
+                    ),
+                ),
+                "preis": st.column_config.NumberColumn("Preis", format="%.2f €"),
+                "volumen": st.column_config.NumberColumn("Volumen", format="%.2f dm³"),
+            },
         )
 
 with tab3:
