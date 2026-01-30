@@ -62,7 +62,7 @@ MARKER_SYMBOLS = ["circle", "square", "diamond", "cross", "x", "triangle-up", "s
 
 # --- HELPER: CONFIG MANAGEMENT ---
 def load_full_json():
-    """Lädt die JSON-Datei."""
+    """Lädt die JSON-Datei mit Fehleranzeige."""
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
@@ -72,10 +72,13 @@ def load_full_json():
                 if "times" not in data:
                     data["times"] = {}
                 return data
-        except:
+        except json.JSONDecodeError as e:
+            st.error(f"⚠️ FEHLER: Die Datei 'saved_configs.json' ist beschädigt (Syntax-Fehler)!\nDetails: {e}")
+            return {"configurations": {}, "times": {}}
+        except Exception as e:
+            st.error(f"⚠️ Unbekannter Fehler beim Laden der Config: {e}")
             return {"configurations": {}, "times": {}}
     return {"configurations": {}, "times": {}}
-
 
 def load_dashboard_configs():
     data = load_full_json()
@@ -237,7 +240,7 @@ def create_single_phase_figure(
         )
 
     lim_x, lim_y_p, lim_y_n = get_trumpet_limits(acc_class)
-    
+
     # Dynamischer Name für die Legende
     label_class = f"Klassengrenzen {str(acc_class).replace('.', ',')}"
 
@@ -248,7 +251,7 @@ def create_single_phase_figure(
             y=lim_y_p,
             mode="lines",
             line=dict(color="black", width=1.5, dash="dash"),
-            name=label_class, 
+            name=label_class,
         ),
         row=1,
         col=1,
@@ -887,22 +890,24 @@ config_names = sorted(list(dashboard_configs.keys()))
 
 # Container für die Konfigurations-Verwaltung
 with st.sidebar.expander("Verwaltung", expanded=True):
-    
+
     # --- VORBEREITUNG: DIALOG-FUNKTION (Muss vor dem Aufruf definiert sein) ---
     @st.dialog("Wirklich löschen?")
     def open_delete_dialog(config_name):
-        st.write(f"Möchtest du die Konfiguration **'{config_name}'** wirklich unwiderruflich löschen?")
+        st.write(
+            f"Möchtest du die Konfiguration **'{config_name}'** wirklich unwiderruflich löschen?"
+        )
         st.warning("Dieser Vorgang kann nicht rückgängig gemacht werden.")
-        
+
         col_yes, col_no = st.columns([1, 1])
-        
+
         with col_yes:
             # "Ja"-Button (Führt die Löschung aus)
             if st.button("Ja, löschen", type="primary", use_container_width=True):
                 if delete_config(config_name):
                     st.toast(f"Konfiguration '{config_name}' gelöscht!", icon="🗑️")
                     st.rerun()
-                    
+
         with col_no:
             # "Nein"-Button (Schließt das Fenster durch Rerun)
             if st.button("Nein", type="secondary", use_container_width=True):
@@ -911,10 +916,10 @@ with st.sidebar.expander("Verwaltung", expanded=True):
     # --- ABSCHNITT 1: BESTEHENDE VERWALTEN ---
     st.markdown("**1. Bestehende Config wählen:**")
     sel_config_load = st.selectbox(
-        "Wähle Config:", 
-        config_names, 
+        "Wähle Config:",
+        config_names,
         index=0 if config_names else None,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     # Drei Spalten für: Laden | Update | Löschen
@@ -926,49 +931,81 @@ with st.sidebar.expander("Verwaltung", expanded=True):
             if sel_config_load:
                 data = dashboard_configs[sel_config_load]
 
-                # --- HELPER: INTELLIGENTES MATCHING (Lokal definiert für Zugriff) ---
+# --- HELPER: INTELLIGENTES MATCHING (Lokal definiert für Zugriff) ---
                 def smart_match(stored_list, available_options, col_name_in_df=None):
-                    if not stored_list: return []
+                    if not stored_list:
+                        return []
+                    
+                    # Performance & Typ-Konvertierung für Vergleich
+                    avail_set = set(available_options)
+                    # Erstelle Mapping String->Original, um Typ-Probleme (2000 vs 2000.0) zu lösen
+                    avail_str_map = {str(x): x for x in available_options}
+                    
                     valid = []
-                    valid.extend([x for x in stored_list if x in available_options])
+                    
+                    # 1. Direkter Match (Exakt)
+                    for item in stored_list:
+                        if item in avail_set:
+                            valid.append(item)
+                        # 2. String Match (z.B. JSON int 2000 vs DataFrame float 2000.0)
+                        elif str(item) in avail_str_map:
+                            valid.append(avail_str_map[str(item)])
+                    
+                    # 3. Falls Meta-Suche nötig (für Wandler-Keys, die sich geändert haben könnten)
                     missing = set(stored_list) - set(valid)
+                    # Wir prüfen nur Items, die wir noch nicht über String-Match gefunden haben
+                    # (Achtung: stored_list items könnten hier noch int/float sein)
+                    
                     if missing and col_name_in_df:
                         for m in missing:
-                            matches_key = [opt for opt in available_options if str(m) in str(opt)]
+                            m_str = str(m)
+                            # A) Teilstring-Suche in den verfügbaren Optionen
+                            matches_key = [
+                                opt for opt in available_options if m_str in str(opt)
+                            ]
                             if matches_key:
                                 valid.extend(matches_key)
                                 continue
+                            
+                            # B) Suche über Hersteller/Modell im DataFrame
                             if col_name_in_df == "wandler_key":
+                                # Wir nutzen df (global), sicherstellen dass Strings verglichen werden
                                 matches_meta = df[
-                                    df["Modell"].astype(str).str.contains(str(m), regex=False, case=False) |
-                                    df["Hersteller"].astype(str).str.contains(str(m), regex=False, case=False)
+                                    df["Modell"].astype(str).str.contains(m_str, regex=False, case=False)
+                                    | df["Hersteller"].astype(str).str.contains(m_str, regex=False, case=False)
                                 ]["wandler_key"].unique()
                                 valid.extend(matches_meta)
+                    
                     return sorted(list(set(valid)))
-
                 # Session State befüllen
                 st.session_state["k_current"] = data.get("current", [])
                 st.session_state["k_geos"] = data.get("geos", [])
-                
+
                 raw_wandlers = data.get("wandlers", [])
-                st.session_state["k_wandlers"] = smart_match(raw_wandlers, ALL_WANDLERS, "wandler_key")
-                
+                st.session_state["k_wandlers"] = smart_match(
+                    raw_wandlers, ALL_WANDLERS, "wandler_key"
+                )
+
                 raw_duts = data.get("duts", [])
-                dut_aliases = {"Einspeisung": "PAC1", "Pruefling": "PAC2"} 
+                dut_aliases = {"Einspeisung": "PAC1", "Pruefling": "PAC2"}
                 mapped_duts = [dut_aliases.get(d, d) for d in raw_duts]
                 st.session_state["k_duts"] = smart_match(mapped_duts, ALL_DUTS)
 
-                st.session_state["k_comp"] = data.get("comp_mode", "Messgerät (z.B. PAC1)")
+                st.session_state["k_comp"] = data.get(
+                    "comp_mode", "Messgerät (z.B. PAC1)"
+                )
                 st.session_state["k_sync"] = data.get("sync_axes", True)
                 st.session_state["k_ylim"] = data.get("y_limit", 1.5)
                 st.session_state["k_yshift"] = data.get("y_shift", 0.0)
                 st.session_state["k_class"] = data.get("acc_class", 0.2)
-                st.session_state["k_bottom_mode"] = data.get("bottom_plot_mode", "Standardabweichung")
+                st.session_state["k_bottom_mode"] = data.get(
+                    "bottom_plot_mode", "Standardabweichung"
+                )
                 st.session_state["k_errbars"] = data.get("show_err_bars", True)
                 st.session_state["k_eco_x"] = data.get("eco_x", "Preis (€)")
                 st.session_state["k_eco_y"] = data.get("eco_y", ["Fehler Nennstrom"])
                 st.session_state["k_eco_type"] = data.get("eco_type", "Scatter")
-                
+
                 st.session_state["loaded_colors"] = data.get("custom_colors", {})
                 st.session_state["loaded_legends"] = data.get("custom_legends", {})
                 st.session_state["loaded_titles"] = data.get("custom_titles", {})
@@ -977,10 +1014,12 @@ with st.sidebar.expander("Verwaltung", expanded=True):
                 st.session_state["loaded_widths"] = data.get("custom_widths", {})
                 st.session_state["loaded_visible"] = data.get("custom_visible", {})
                 st.session_state["loaded_sizes"] = data.get("custom_sizes", {})
-                
-                if "design_editor" in st.session_state: del st.session_state["design_editor"]
-                if "titles_editor" in st.session_state: del st.session_state["titles_editor"]
-                
+
+                if "design_editor" in st.session_state:
+                    del st.session_state["design_editor"]
+                if "titles_editor" in st.session_state:
+                    del st.session_state["titles_editor"]
+
                 st.success(f"'{sel_config_load}' geladen!")
                 st.rerun()
 
@@ -1006,12 +1045,16 @@ with st.sidebar.expander("Verwaltung", expanded=True):
 
     # --- ABSCHNITT 2: NEUE ANSICHT ---
     st.markdown("**2. Neue Ansicht erstellen:**")
-    new_config_name = st.text_input("Name eingeben:", placeholder="z.B. Test_Neu", label_visibility="collapsed")
-    
+    new_config_name = st.text_input(
+        "Name eingeben:", placeholder="z.B. Test_Neu", label_visibility="collapsed"
+    )
+
     if st.button("➕ Hinzufügen / Als Neu speichern", use_container_width=True):
         if new_config_name:
             if new_config_name in config_names:
-                st.warning("Name existiert bereits! Bitte oben 'Speichern' nutzen oder umbenennen.")
+                st.warning(
+                    "Name existiert bereits! Bitte oben 'Speichern' nutzen oder umbenennen."
+                )
             else:
                 st.session_state["trigger_save"] = True
                 st.session_state["save_name"] = new_config_name
@@ -1641,22 +1684,24 @@ with tab2:
     # --- STYLE DEFINITION FÜR ALLE LEGENDEN UNTEN ---
     legend_layout_bottom = dict(
         orientation="h",
-        y=-0.25,        # Position unterhalb der X-Achse
-        x=0.5,          # Zentriert
+        y=-0.25,  # Position unterhalb der X-Achse
+        x=0.5,  # Zentriert
         xanchor="center",
         bgcolor="rgba(255,255,255,0.8)",
-        font=dict(size=14)
+        font=dict(size=14),
     )
 
     # --- 4. DIAGRAMM TABS ---
-    t_scat, t_bar, t_heat, t_box, t_par, t_rad = st.tabs([
-        "🔵 Scatter (Kosten/Nutzen)", 
-        "📊 Ranking (Index)", 
-        "🔥 Heatmap", 
-        "📦 Verteilung", 
-        "📉 Pareto", 
-        "🕸️ Radar"
-    ])
+    t_scat, t_bar, t_heat, t_box, t_par, t_rad = st.tabs(
+        [
+            "🔵 Scatter (Kosten/Nutzen)",
+            "📊 Ranking (Index)",
+            "🔥 Heatmap",
+            "📦 Verteilung",
+            "📉 Pareto",
+            "🕸️ Radar",
+        ]
+    )
 
     # --- TAB: SCATTER ---
     with t_scat:
@@ -1668,7 +1713,7 @@ with tab2:
             value_name="Wert",
         )
         df_long["Metrik"] = df_long["Metrik_Intern"].map(REVERSE_Y_MAP)
-        
+
         fig_eco = px.scatter(
             df_long,
             x=x_col,
@@ -1678,29 +1723,32 @@ with tab2:
             size=[15] * len(df_long),
             color_discrete_map=color_map_dict,
             title=title_str,
-            hover_data=["legend_name", "Wert"]
+            hover_data=["legend_name", "Wert"],
         )
-        fig_eco.update_layout(legend=legend_layout_bottom) # LEGENDE UNTEN
+        fig_eco.update_layout(legend=legend_layout_bottom)  # LEGENDE UNTEN
         st.plotly_chart(fig_eco, use_container_width=True)
-        
+
         st.session_state["fig_snapshot_tab2"] = fig_eco
         st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Scatter-Plot"
 
     # --- TAB: RANKING (PERFORMANCE INDEX) ---
     with t_bar:
-        title_str = TITLES_MAP.get("Performance-Index", "Performance Index (Niedriger ist besser)")
+        title_str = TITLES_MAP.get(
+            "Performance-Index", "Performance Index (Niedriger ist besser)"
+        )
         norm_cols = []
         df_err["total_score"] = 0.0
-        
+
         for label in y_selection:
             raw_col = Y_OPTIONS_MAP[label]
             mx_val = df_err[raw_col].abs().max()
-            if mx_val == 0: mx_val = 1.0
-            
+            if mx_val == 0:
+                mx_val = 1.0
+
             df_err[label] = (df_err[raw_col].abs() / mx_val) * 100
             df_err["total_score"] += df_err[label]
             norm_cols.append(label)
-            
+
         df_sorted = df_err.sort_values("total_score", ascending=True)
         df_long = df_sorted.melt(
             id_vars=["legend_name"],
@@ -1708,7 +1756,7 @@ with tab2:
             var_name="Kategorie",
             value_name="Anteil am Score (%)",
         )
-        
+
         fig_eco = px.bar(
             df_long,
             y="legend_name",
@@ -1719,10 +1767,10 @@ with tab2:
         )
         fig_eco.update_layout(
             yaxis=dict(autorange="reversed"),
-            legend=legend_layout_bottom # LEGENDE UNTEN
+            legend=legend_layout_bottom,  # LEGENDE UNTEN
         )
         st.plotly_chart(fig_eco, use_container_width=True)
-        
+
         st.session_state["fig_snapshot_tab2"] = fig_eco
         st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Performance-Index"
 
@@ -1736,7 +1784,7 @@ with tab2:
             value_name="Wert",
         )
         df_long["Kategorie"] = df_long["Kategorie_Intern"].map(REVERSE_Y_MAP)
-        
+
         fig_eco = px.density_heatmap(
             df_long,
             x="legend_name",
@@ -1750,7 +1798,7 @@ with tab2:
         # passen aber die X-Achsen Labels an.
         fig_eco.update_layout(xaxis=dict(tickangle=45))
         st.plotly_chart(fig_eco, use_container_width=True)
-        
+
         st.session_state["fig_snapshot_tab2"] = fig_eco
         st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Heatmap"
 
@@ -1764,7 +1812,7 @@ with tab2:
             value_name="Wert",
         )
         df_long["Kategorie"] = df_long["Kategorie_Intern"].map(REVERSE_Y_MAP)
-        
+
         fig_eco = px.box(
             df_long,
             x="legend_name",
@@ -1772,9 +1820,9 @@ with tab2:
             color="Kategorie",
             title=title_str,
         )
-        fig_eco.update_layout(legend=legend_layout_bottom) # LEGENDE UNTEN
+        fig_eco.update_layout(legend=legend_layout_bottom)  # LEGENDE UNTEN
         st.plotly_chart(fig_eco, use_container_width=True)
-        
+
         st.session_state["fig_snapshot_tab2"] = fig_eco
         st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Boxplot"
 
@@ -1783,10 +1831,12 @@ with tab2:
         title_str = TITLES_MAP.get("Pareto", "Pareto-Analyse (Einflussfaktoren)")
         target_y = y_cols_selected[0]
         target_label = y_selection[0]
-        
+
         df_sorted = df_err.sort_values(by=target_y, ascending=False)
-        df_sorted["cum_pct"] = (df_sorted[target_y].cumsum() / df_sorted[target_y].sum() * 100)
-        
+        df_sorted["cum_pct"] = (
+            df_sorted[target_y].cumsum() / df_sorted[target_y].sum() * 100
+        )
+
         fig_par = make_subplots(specs=[[{"secondary_y": True}]])
         fig_par.add_trace(
             go.Bar(
@@ -1807,9 +1857,11 @@ with tab2:
             ),
             secondary_y=True,
         )
-        fig_par.update_layout(title=title_str, legend=legend_layout_bottom) # LEGENDE UNTEN
+        fig_par.update_layout(
+            title=title_str, legend=legend_layout_bottom
+        )  # LEGENDE UNTEN
         st.plotly_chart(fig_par, use_container_width=True)
-        
+
         st.session_state["fig_snapshot_tab2"] = fig_par
         st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Pareto"
 
@@ -1818,12 +1870,12 @@ with tab2:
         title_str = TITLES_MAP.get("Radar", "Multi-Kriterieller Radar")
         fig_r = go.Figure()
         categories = y_selection
-        
+
         max_vals = {}
         for col_name in y_cols_selected:
             m = df_err[col_name].max()
             max_vals[col_name] = m if m != 0 else 1
-            
+
         for i, row in df_err.iterrows():
             r_vals = []
             for col_name in y_cols_selected:
@@ -1832,7 +1884,7 @@ with tab2:
                 r_vals.append(norm_val)
             r_vals.append(r_vals[0])
             theta_vals = categories + [categories[0]]
-            
+
             fig_r.add_trace(
                 go.Scatterpolar(
                     r=r_vals,
@@ -1845,18 +1897,20 @@ with tab2:
         fig_r.update_layout(
             polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
             title=title_str,
-            legend=legend_layout_bottom # LEGENDE UNTEN
+            legend=legend_layout_bottom,  # LEGENDE UNTEN
         )
         st.plotly_chart(fig_r, use_container_width=True)
-        
+
         st.session_state["fig_snapshot_tab2"] = fig_r
         st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Radar"
 
     # --- UNTERER BEREICH: DATENTABELLE ---
     with st.expander("🔢 Detaillierte Datentabelle ansehen"):
         st.dataframe(
-            df_err.drop(columns=["color_hex", "vol_t", "vol_b", "vol_h", "wandler_key"]), 
-            use_container_width=True
+            df_err.drop(
+                columns=["color_hex", "vol_t", "vol_b", "vol_h", "wandler_key"]
+            ),
+            use_container_width=True,
         )
 
 with tab3:
@@ -1895,11 +1949,15 @@ with tab3:
     if load_full_db:
         # Zeige ALLE Daten der Datenbank (df)
         df_editor_source = df.copy()
-        st.caption(f"Zeige alle {len(df_editor_source['raw_file'].unique())} Dateien in der Datenbank.")
+        st.caption(
+            f"Zeige alle {len(df_editor_source['raw_file'].unique())} Dateien in der Datenbank."
+        )
     else:
         # Zeige nur die aktuell gefilterten Daten (df_sub)
         df_editor_source = df_sub.copy()
-        st.caption(f"Zeige {len(df_editor_source['raw_file'].unique())} Dateien (basierend auf Sidebar-Filter).")
+        st.caption(
+            f"Zeige {len(df_editor_source['raw_file'].unique())} Dateien (basierend auf Sidebar-Filter)."
+        )
 
     # Vorbereitung der Tabelle (Duplikate entfernen, da DB pro Messpunkt speichert)
     df_editor_view = (
@@ -1914,7 +1972,7 @@ with tab3:
         hide_index=True,
         key="specs_editor",
         num_rows="dynamic",  # Erlaubt Einfügen neuer Zeilen
-        use_container_width=True
+        use_container_width=True,
     )
 
     if st.button("💾 Änderungen in DB speichern", type="primary"):
@@ -1936,6 +1994,7 @@ with tab3:
             st.toast(f"{count} Dateien erfolgreich aktualisiert!", icon="✅")
             # Kurze Pause damit Toast sichtbar bleibt, dann Reload für Tabellen-Update
             import time
+
             time.sleep(1)
             st.rerun()
         else:
@@ -1945,7 +2004,7 @@ with tab3:
 with tab4:
     st.markdown("### ✂️ Manueller Rohdaten-Export")
     TARGET_LEVELS_T4 = [5, 20, 50, 80, 90, 100, 120]
-    
+
     # Session State initialisieren
     for level in TARGET_LEVELS_T4:
         if f"s_{level}" not in st.session_state:
@@ -2020,11 +2079,23 @@ with tab4:
             "Datei:", files_options, key="t4_file_sel", on_change=on_change_file
         )
         sel_file_path = file_map[sel_file_disp]
-        
+
         c_prev, c_next = st.columns(2)
-        c_prev.button("⬅️ Zurück", key="btn_prev", on_click=nav_callback, args=("prev",), use_container_width=True)
-        c_next.button("Weiter ➡️", key="btn_next", on_click=nav_callback, args=("next",), use_container_width=True)
-        
+        c_prev.button(
+            "⬅️ Zurück",
+            key="btn_prev",
+            on_click=nav_callback,
+            args=("prev",),
+            use_container_width=True,
+        )
+        c_next.button(
+            "Weiter ➡️",
+            key="btn_next",
+            on_click=nav_callback,
+            args=("next",),
+            use_container_width=True,
+        )
+
         st.markdown("---")
         st.button(
             "⏩ Nächste Offene suchen",
@@ -2059,7 +2130,7 @@ with tab4:
                             st.session_state[f"e_{lvl}"] = vals[1]
 
             detected = load_file_preview_tab4(sel_file_path)
-            
+
             # Header Bereich mit Datei-Infos
             with st.container(border=True):
                 c_inf1, c_inf2, c_inf3 = st.columns([3, 1, 1])
@@ -2076,7 +2147,7 @@ with tab4:
                         key=f"ns_{clean_name_base}",
                     )
                 with c_inf3:
-                     if st.button("🔄 Reset Zeiten", use_container_width=True):
+                    if st.button("🔄 Reset Zeiten", use_container_width=True):
                         # Reload logic embedded in button
                         fresh_times = load_time_configs()
                         fresh_specific = fresh_times.get(clean_name_base, {})
@@ -2084,7 +2155,11 @@ with tab4:
                             for lvl_str, vals in fresh_specific.items():
                                 if lvl_str.isdigit():
                                     lvl = int(lvl_str)
-                                    if lvl in TARGET_LEVELS_T4 and isinstance(vals, list) and len(vals) == 2:
+                                    if (
+                                        lvl in TARGET_LEVELS_T4
+                                        and isinstance(vals, list)
+                                        and len(vals) == 2
+                                    ):
                                         st.session_state[f"s_{lvl}"] = vals[0]
                                         st.session_state[f"e_{lvl}"] = vals[1]
                             st.rerun()
@@ -2093,8 +2168,10 @@ with tab4:
 
             if t_idx:
                 # Plot Bereich
-                sel_ref_dev = st.selectbox("Referenz-Gerät für Vorschau (L1):", detected, key="ref_dev_t4")
-                
+                sel_ref_dev = st.selectbox(
+                    "Referenz-Gerät für Vorschau (L1):", detected, key="ref_dev_t4"
+                )
+
                 ref_l1 = full_data_t4[sel_ref_dev]["L1"]
                 if ref_l1 is not None:
                     fig_sel = go.Figure()
@@ -2133,45 +2210,45 @@ with tab4:
                         margin=dict(t=10, b=10, l=10, r=10),
                         yaxis_title="Last %",
                         xaxis_title="Datenpunkte",
-                        template="plotly_white"
+                        template="plotly_white",
                     )
                     st.plotly_chart(fig_sel, use_container_width=True)
 
                 st.markdown("##### 🎯 Bereiche definieren")
-                
+
                 # --- NEUES LAYOUT: GRID ---
                 # Wir erstellen 4 Spalten für die Eingabefelder
                 grid_cols = st.columns(4)
-                
+
                 for i, level in enumerate(TARGET_LEVELS_T4):
                     # Spalte auswählen (Index modulo 4)
                     col = grid_cols[i % 4]
-                    
+
                     with col:
                         # Container für bessere Optik (Rahmen um jedes Level)
                         with st.container(border=True):
                             st.markdown(f"**Stufe {level}%**")
-                            
+
                             # Start und Ende nebeneinander in diesem kleinen Container
                             c_start, c_end = st.columns(2)
-                            
+
                             with c_start:
                                 st.number_input(
-                                    "Start", 
-                                    key=f"s_{level}", 
+                                    "Start",
+                                    key=f"s_{level}",
                                     min_value=0,
-                                    label_visibility="collapsed" # Label ausblenden, Platz sparen
+                                    label_visibility="collapsed",  # Label ausblenden, Platz sparen
                                 )
-                                st.caption("Start") # Kleines Label drunter
-                                
+                                st.caption("Start")  # Kleines Label drunter
+
                             with c_end:
                                 st.number_input(
-                                    "Ende", 
-                                    key=f"e_{level}", 
+                                    "Ende",
+                                    key=f"e_{level}",
                                     min_value=0,
-                                    on_change=update_start_callback, 
-                                    args=(level,), 
-                                    label_visibility="collapsed"
+                                    on_change=update_start_callback,
+                                    args=(level,),
+                                    label_visibility="collapsed",
                                 )
                                 st.caption("Ende")
 
@@ -2184,9 +2261,15 @@ with tab4:
                         "Geräte exportieren:", detected, default=detected
                     )
                 with c_exp2:
-                    skip_n = st.number_input("Einschwing-Skip:", value=0, help="Punkte am Anfang des Bereichs ignorieren")
+                    skip_n = st.number_input(
+                        "Einschwing-Skip:",
+                        value=0,
+                        help="Punkte am Anfang des Bereichs ignorieren",
+                    )
                 with c_exp3:
-                    stat_opt = st.radio("Status setzen:", ["OK", "Problem"], horizontal=True)
+                    stat_opt = st.radio(
+                        "Status setzen:", ["OK", "Problem"], horizontal=True
+                    )
 
                 if st.button(
                     "💾 Speichern & CSV Exportieren",
@@ -2216,7 +2299,9 @@ with tab4:
                             save_tracking_status(clean_name_base, s_code)
                             st.toast(f"Gespeichert: {os.path.basename(out)}", icon="✅")
                             # Success Message kurz anzeigen
-                            st.success("Daten wurden exportiert und Zeiten gespeichert.")
+                            st.success(
+                                "Daten wurden exportiert und Zeiten gespeichert."
+                            )
 
 # --- TAB 5: DB AGGREGATOR ---
 with tab5:
@@ -2313,10 +2398,12 @@ if trigger_export_btn:
                         fig_ex.update_layout(width=1123, height=794)
                         zf.writestr(
                             f"{safe_conf_name}-Zusammenfassung_MultiCurrent.pdf",
-                            fig_ex.to_image(format="pdf")
+                            fig_ex.to_image(format="pdf"),
                         )
                     else:
-                        st.warning("⚠️ Gesamtübersicht noch nicht geladen (bitte Tab 1 einmal öffnen).")
+                        st.warning(
+                            "⚠️ Gesamtübersicht noch nicht geladen (bitte Tab 1 einmal öffnen)."
+                        )
 
                 # --- EXPORT 2: ÖKONOMIE (DYNAMISCHE NEUBERECHNUNG) ---
                 eco_requests = [s for s in export_selection if "Ökonomie" in s]
@@ -2328,9 +2415,36 @@ if trigger_export_btn:
                         .agg(
                             wandler_key=("wandler_key", "first"),
                             legend_name=("final_legend", "first"),
-                            err_nieder=("err_ratio", lambda x: x[df_sub.loc[x.index, "target_load"].isin(ZONES["Niederstrom (5-50%)"])].abs().mean()),
-                            err_nom=("err_ratio", lambda x: x[df_sub.loc[x.index, "target_load"].isin(ZONES["Nennstrom (80-100%)"])].abs().mean()),
-                            err_high=("err_ratio", lambda x: x[df_sub.loc[x.index, "target_load"].isin(ZONES["Überlast (≥120%)"])].abs().mean()),
+                            err_nieder=(
+                                "err_ratio",
+                                lambda x: x[
+                                    df_sub.loc[x.index, "target_load"].isin(
+                                        ZONES["Niederstrom (5-50%)"]
+                                    )
+                                ]
+                                .abs()
+                                .mean(),
+                            ),
+                            err_nom=(
+                                "err_ratio",
+                                lambda x: x[
+                                    df_sub.loc[x.index, "target_load"].isin(
+                                        ZONES["Nennstrom (80-100%)"]
+                                    )
+                                ]
+                                .abs()
+                                .mean(),
+                            ),
+                            err_high=(
+                                "err_ratio",
+                                lambda x: x[
+                                    df_sub.loc[x.index, "target_load"].isin(
+                                        ZONES["Überlast (≥120%)"]
+                                    )
+                                ]
+                                .abs()
+                                .mean(),
+                            ),
                             preis=("Preis (€)", "first"),
                             vol_t=("T (mm)", "first"),
                             vol_b=("B (mm)", "first"),
@@ -2339,14 +2453,20 @@ if trigger_export_btn:
                         )
                         .reset_index()
                     )
-                    df_err_exp["volumen"] = (df_err_exp["vol_t"] * df_err_exp["vol_b"] * df_err_exp["vol_h"]) / 1000.0
+                    df_err_exp["volumen"] = (
+                        df_err_exp["vol_t"] * df_err_exp["vol_b"] * df_err_exp["vol_h"]
+                    ) / 1000.0
 
                     # Mapping Definitionen
                     Y_OPT_EXP = {
-                        "Fehler Niederstrom": "err_nieder", "Fehler Nennstrom": "err_nom",
-                        "Fehler Überlast": "err_high", "Preis (€)": "preis",
-                        "Volumen (Gesamt)": "volumen", "Breite (B)": "vol_b",
-                        "Höhe (H)": "vol_h", "Tiefe (T)": "vol_t",
+                        "Fehler Niederstrom": "err_nieder",
+                        "Fehler Nennstrom": "err_nom",
+                        "Fehler Überlast": "err_high",
+                        "Preis (€)": "preis",
+                        "Volumen (Gesamt)": "volumen",
+                        "Breite (B)": "vol_b",
+                        "Höhe (H)": "vol_h",
+                        "Tiefe (T)": "vol_t",
                     }
                     REV_Y_EXP = {v: k for k, v in Y_OPT_EXP.items()}
 
@@ -2354,24 +2474,57 @@ if trigger_export_btn:
                     sel_y_cols = [Y_OPT_EXP[k] for k in sel_y_keys if k in Y_OPT_EXP]
                     sel_x_key = st.session_state.get("k_eco_x", "Preis (€)")
                     col_x_exp = "preis" if "Preis" in sel_x_key else "volumen"
-                    color_map_exp = dict(zip(df_err_exp["legend_name"], df_err_exp["color_hex"]))
+                    color_map_exp = dict(
+                        zip(df_err_exp["legend_name"], df_err_exp["color_hex"])
+                    )
 
                     # 1. SCATTER
                     if "Ökonomie: Scatter-Plot" in export_selection:
-                        title_str = TITLES_MAP.get("Scatter-Plot", f"{sel_x_key} vs. Auswahl")
-                        df_long = df_err_exp.melt(id_vars=["unique_id", "legend_name", col_x_exp, "color_hex"], value_vars=sel_y_cols, var_name="Metrik_Intern", value_name="Wert")
+                        title_str = TITLES_MAP.get(
+                            "Scatter-Plot", f"{sel_x_key} vs. Auswahl"
+                        )
+                        df_long = df_err_exp.melt(
+                            id_vars=[
+                                "unique_id",
+                                "legend_name",
+                                col_x_exp,
+                                "color_hex",
+                            ],
+                            value_vars=sel_y_cols,
+                            var_name="Metrik_Intern",
+                            value_name="Wert",
+                        )
                         df_long["Metrik"] = df_long["Metrik_Intern"].map(REV_Y_EXP)
 
                         fig_eco = px.scatter(
-                            df_long, x=col_x_exp, y="Wert", color="legend_name", symbol="Metrik",
-                            size=[15] * len(df_long), color_discrete_map=color_map_exp, title=title_str
+                            df_long,
+                            x=col_x_exp,
+                            y="Wert",
+                            color="legend_name",
+                            symbol="Metrik",
+                            size=[15] * len(df_long),
+                            color_discrete_map=color_map_exp,
+                            title=title_str,
                         )
-                        fig_eco.update_layout(template="plotly_white", width=1123, height=794, font=dict(family="Serif", size=14, color="black"), legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"))
-                        zf.writestr(f"{safe_conf_name}-Oekonomie_Scatter.pdf", fig_eco.to_image(format="pdf"))
+                        fig_eco.update_layout(
+                            template="plotly_white",
+                            width=1123,
+                            height=794,
+                            font=dict(family="Serif", size=14, color="black"),
+                            legend=dict(
+                                orientation="h", y=-0.15, x=0.5, xanchor="center"
+                            ),
+                        )
+                        zf.writestr(
+                            f"{safe_conf_name}-Oekonomie_Scatter.pdf",
+                            fig_eco.to_image(format="pdf"),
+                        )
 
                     # 2. PERFORMANCE INDEX (RANKING) + LATEX
                     if "Ökonomie: Performance-Index" in export_selection:
-                        title_str = TITLES_MAP.get("Performance-Index", "Performance Index")
+                        title_str = TITLES_MAP.get(
+                            "Performance-Index", "Performance Index"
+                        )
                         df_rank = df_err_exp.copy()
                         df_rank["total_score"] = 0.0
                         norm_cols = []
@@ -2381,7 +2534,8 @@ if trigger_export_btn:
                             if label in Y_OPT_EXP:
                                 raw_c = Y_OPT_EXP[label]
                                 mx = df_rank[raw_c].abs().max()
-                                if mx == 0: mx = 1
+                                if mx == 0:
+                                    mx = 1
                                 df_rank[label] = (df_rank[raw_c].abs() / mx) * 100
                                 df_rank["total_score"] += df_rank[label]
                                 norm_cols.append(label)
@@ -2389,45 +2543,105 @@ if trigger_export_btn:
                         df_rank = df_rank.sort_values("total_score", ascending=True)
 
                         # --- PDF ERZEUGUNG ---
-                        df_long = df_rank.melt(id_vars=["legend_name"], value_vars=norm_cols, var_name="Kategorie", value_name="Anteil (%)")
+                        df_long = df_rank.melt(
+                            id_vars=["legend_name"],
+                            value_vars=norm_cols,
+                            var_name="Kategorie",
+                            value_name="Anteil (%)",
+                        )
                         fig_eco = px.bar(
-                            df_long, y="legend_name", x="Anteil (%)", color="Kategorie",
-                            orientation="h", title=title_str, color_discrete_sequence=px.colors.qualitative.Safe
+                            df_long,
+                            y="legend_name",
+                            x="Anteil (%)",
+                            color="Kategorie",
+                            orientation="h",
+                            title=title_str,
+                            color_discrete_sequence=px.colors.qualitative.Safe,
                         )
                         fig_eco.update_layout(
-                            yaxis=dict(autorange="reversed"), template="plotly_white", width=1123, height=794,
-                            font=dict(family="Serif", size=14, color="black"), legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center")
+                            yaxis=dict(autorange="reversed"),
+                            template="plotly_white",
+                            width=1123,
+                            height=794,
+                            font=dict(family="Serif", size=14, color="black"),
+                            legend=dict(
+                                orientation="h", y=-0.15, x=0.5, xanchor="center"
+                            ),
                         )
-                        zf.writestr(f"{safe_conf_name}-Oekonomie_Ranking.pdf", fig_eco.to_image(format="pdf"))
+                        zf.writestr(
+                            f"{safe_conf_name}-Oekonomie_Ranking.pdf",
+                            fig_eco.to_image(format="pdf"),
+                        )
 
-# --- LATEX TABELLEN ERZEUGUNG (HIER EINGEFÜGT) ---
+                        # --- HILFSFUNKTION: WIDERSTAND ENTFERNEN & ZEILENUMBRUCH ---
+# --- HILFSFUNKTION: NUR ZEILENUMBRUCH (WIDERSTAND BLEIBT) ---
+                        def clean_tex_and_break(text):
+                            text = str(text)
+                            
+                            # 1. Symbole ersetzen (Ω wird zu $\Omega$)
+                            symbol_map = {
+                                "Ω": r"$\Omega$",
+                                "µ": r"$\mu$",
+                                "²": r"$^2$",
+                                "³": r"$^3$"
+                            }
+                            for char, repl in symbol_map.items():
+                                text = text.replace(char, repl)
+                            
+                            # 2. LaTeX Special Chars escapen
+                            special_chars = {"_": r"\_", "%": r"\%", "&": r"\&", "#": r"\#"}
+                            for char, repl in special_chars.items():
+                                if char in text:
+                                    text = text.replace(char, repl)
+                            
+                            # 3. SPLIT & UMBRUCH (Alles behalten)
+                            parts = text.split("|")
+                            clean_parts = [p.strip() for p in parts]
+                            
+                            # Wenn wir genug Teile haben (mindestens 3), machen wir einen Umbruch nach dem 2. Teil
+                            # Beispiel: "Modell | 2000 A | 1,35 Ohm | Dreieck"
+                            # Wird zu:  "Modell | 2000 A \newline 1,35 Ohm | Dreieck"
+                            
+                            if len(clean_parts) >= 3:
+                                line1 = " | ".join(clean_parts[:2])
+                                line2 = " | ".join(clean_parts[2:])
+                                return f"{line1} \\newline {line2}"
+                            
+                            # Fallback für kurze Namen
+                            return " | ".join(clean_parts)
+
+                        # --- LATEX TABELLEN ERZEUGUNG ---
                         latex_lines = []
                         latex_lines.append(r"\begin{table}[H]")
                         latex_lines.append(r"    \centering")
                         latex_lines.append(rf"    \caption{{{title_str}}}")
                         latex_lines.append(rf"    \label{{tab:{safe_conf_name}_ranking}}")
 
-                        # Spaltendefinition: l für Name, c für jede Metrik + c für Score
-                        col_def = "l" + "c" * (len(norm_cols) + 1)
+                        # WICHTIG: Spalte p{6cm} für Zeilenumbruch
+                        col_def = "p{6cm}" + "c" * (len(norm_cols) + 1)
                         latex_lines.append(rf"    \begin{{tabular}}{{{col_def}}}")
 
-                        # 1. TOPRULE (statt \hline)
+                        # 1. TOPRULE
                         latex_lines.append(r"        \toprule")
 
                         # Header
                         header_cells = [r"\textbf{Messsystem}"]
                         for col_name in norm_cols:
-                            clean_col = col_name.replace("%", r"\%").replace("_", r"\_")
-                            header_cells.append(rf"\textbf{{{clean_col} [\%]}}")
-                        header_cells.append(r"\textbf{Fehler-Score [\%]}")
+                            clean_col = col_name.replace("%", r"\%").replace("_", r"\_").replace("Ω", r"$\Omega$")
+                            stacked_text = clean_col.replace(" ", r" \\ ")
+                            header_cells.append(rf"\textbf{{\shortstack[c]{{{stacked_text}}}}}")
+                        
+                        header_cells.append(r"\textbf{\shortstack[c]{Fehler-Score \\ {[\%]}}}")
 
-                        # 2. MIDRULE (Header abschließen, dann Linie)
+                        # 2. MIDRULE
                         latex_lines.append("        " + " & ".join(header_cells) + r" \\")
                         latex_lines.append(r"        \midrule")
 
                         # Rows
                         for _, row in df_rank.iterrows():
-                            name_clean = str(row['legend_name']).replace("_", r"\_").replace("%", r"\%").replace("&", r"\&")
+                            # Funktion ruft jetzt: Behalten + Umbruch
+                            name_clean = clean_tex_and_break(row['legend_name'])
+                            
                             row_cells = [name_clean]
                             for col_name in norm_cols:
                                 val = row[col_name]
@@ -2435,9 +2649,10 @@ if trigger_export_btn:
 
                             score_val = row["total_score"]
                             row_cells.append(f"{score_val:.2f}".replace(".", ","))
+                            
                             latex_lines.append("        " + " & ".join(row_cells) + r" \\")
 
-                        # 3. BOTTOMRULE (statt \hline)
+                        # 3. BOTTOMRULE
                         latex_lines.append(r"        \bottomrule")
                         latex_lines.append(r"    \end{tabular}")
                         latex_lines.append(r"\end{table}")
@@ -2447,23 +2662,71 @@ if trigger_export_btn:
                         zf.writestr(f"{safe_conf_name}-Oekonomie_Ranking.tex", latex_content)
 
 
+
                     # 3. HEATMAP
                     if "Ökonomie: Heatmap" in export_selection:
                         title_str = TITLES_MAP.get("Heatmap", "Heatmap")
-                        df_long = df_err_exp.melt(id_vars=["legend_name"], value_vars=sel_y_cols, var_name="Kategorie_Intern", value_name="Wert")
-                        df_long["Kategorie"] = df_long["Kategorie_Intern"].map(REV_Y_EXP)
-                        fig_eco = px.density_heatmap(df_long, x="legend_name", y="Kategorie", z="Wert", text_auto=True, color_continuous_scale="Blues", title=title_str)
-                        fig_eco.update_layout(template="plotly_white", width=1123, height=794, font=dict(family="Serif", size=14, color="black"))
-                        zf.writestr(f"{safe_conf_name}-Oekonomie_Heatmap.pdf", fig_eco.to_image(format="pdf"))
+                        df_long = df_err_exp.melt(
+                            id_vars=["legend_name"],
+                            value_vars=sel_y_cols,
+                            var_name="Kategorie_Intern",
+                            value_name="Wert",
+                        )
+                        df_long["Kategorie"] = df_long["Kategorie_Intern"].map(
+                            REV_Y_EXP
+                        )
+                        fig_eco = px.density_heatmap(
+                            df_long,
+                            x="legend_name",
+                            y="Kategorie",
+                            z="Wert",
+                            text_auto=True,
+                            color_continuous_scale="Blues",
+                            title=title_str,
+                        )
+                        fig_eco.update_layout(
+                            template="plotly_white",
+                            width=1123,
+                            height=794,
+                            font=dict(family="Serif", size=14, color="black"),
+                        )
+                        zf.writestr(
+                            f"{safe_conf_name}-Oekonomie_Heatmap.pdf",
+                            fig_eco.to_image(format="pdf"),
+                        )
 
                     # 4. BOXPLOT
                     if "Ökonomie: Boxplot" in export_selection:
                         title_str = TITLES_MAP.get("Boxplot", "Verteilung")
-                        df_long = df_err_exp.melt(id_vars=["legend_name"], value_vars=sel_y_cols, var_name="Kategorie_Intern", value_name="Wert")
-                        df_long["Kategorie"] = df_long["Kategorie_Intern"].map(REV_Y_EXP)
-                        fig_eco = px.box(df_long, x="legend_name", y="Wert", color="Kategorie", title=title_str)
-                        fig_eco.update_layout(template="plotly_white", width=1123, height=794, font=dict(family="Serif", size=14, color="black"), legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"))
-                        zf.writestr(f"{safe_conf_name}-Oekonomie_Boxplot.pdf", fig_eco.to_image(format="pdf"))
+                        df_long = df_err_exp.melt(
+                            id_vars=["legend_name"],
+                            value_vars=sel_y_cols,
+                            var_name="Kategorie_Intern",
+                            value_name="Wert",
+                        )
+                        df_long["Kategorie"] = df_long["Kategorie_Intern"].map(
+                            REV_Y_EXP
+                        )
+                        fig_eco = px.box(
+                            df_long,
+                            x="legend_name",
+                            y="Wert",
+                            color="Kategorie",
+                            title=title_str,
+                        )
+                        fig_eco.update_layout(
+                            template="plotly_white",
+                            width=1123,
+                            height=794,
+                            font=dict(family="Serif", size=14, color="black"),
+                            legend=dict(
+                                orientation="h", y=-0.15, x=0.5, xanchor="center"
+                            ),
+                        )
+                        zf.writestr(
+                            f"{safe_conf_name}-Oekonomie_Boxplot.pdf",
+                            fig_eco.to_image(format="pdf"),
+                        )
 
                     # 5. PARETO
                     if "Ökonomie: Pareto" in export_selection and sel_y_cols:
@@ -2471,13 +2734,44 @@ if trigger_export_btn:
                         target_y = sel_y_cols[0]
                         target_lbl = sel_y_keys[0]
                         df_srt = df_err_exp.sort_values(by=target_y, ascending=False)
-                        df_srt["cum_pct"] = df_srt[target_y].cumsum() / df_srt[target_y].sum() * 100
+                        df_srt["cum_pct"] = (
+                            df_srt[target_y].cumsum() / df_srt[target_y].sum() * 100
+                        )
 
                         fig_par = make_subplots(specs=[[{"secondary_y": True}]])
-                        fig_par.add_trace(go.Bar(x=df_srt["legend_name"], y=df_srt[target_y], name=target_lbl, marker_color=df_srt["color_hex"]), secondary_y=False)
-                        fig_par.add_trace(go.Scatter(x=df_srt["legend_name"], y=df_srt["cum_pct"], name="Kumulativ %", mode="lines+markers", line=dict(color="red")), secondary_y=True)
-                        fig_par.update_layout(title=title_str, template="plotly_white", width=1123, height=794, font=dict(family="Serif", size=14, color="black"), legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"))
-                        zf.writestr(f"{safe_conf_name}-Oekonomie_Pareto.pdf", fig_par.to_image(format="pdf"))
+                        fig_par.add_trace(
+                            go.Bar(
+                                x=df_srt["legend_name"],
+                                y=df_srt[target_y],
+                                name=target_lbl,
+                                marker_color=df_srt["color_hex"],
+                            ),
+                            secondary_y=False,
+                        )
+                        fig_par.add_trace(
+                            go.Scatter(
+                                x=df_srt["legend_name"],
+                                y=df_srt["cum_pct"],
+                                name="Kumulativ %",
+                                mode="lines+markers",
+                                line=dict(color="red"),
+                            ),
+                            secondary_y=True,
+                        )
+                        fig_par.update_layout(
+                            title=title_str,
+                            template="plotly_white",
+                            width=1123,
+                            height=794,
+                            font=dict(family="Serif", size=14, color="black"),
+                            legend=dict(
+                                orientation="h", y=-0.15, x=0.5, xanchor="center"
+                            ),
+                        )
+                        zf.writestr(
+                            f"{safe_conf_name}-Oekonomie_Pareto.pdf",
+                            fig_par.to_image(format="pdf"),
+                        )
 
                     # 6. RADAR
                     if "Ökonomie: Radar" in export_selection:
@@ -2492,18 +2786,46 @@ if trigger_export_btn:
                             r_vals = [(row[c] / max_vals[c]) for c in sel_y_cols]
                             r_vals.append(r_vals[0])
                             theta_vals = sel_y_keys + [sel_y_keys[0]]
-                            fig_r.add_trace(go.Scatterpolar(r=r_vals, theta=theta_vals, fill="toself", name=row["legend_name"], line_color=row["color_hex"]))
+                            fig_r.add_trace(
+                                go.Scatterpolar(
+                                    r=r_vals,
+                                    theta=theta_vals,
+                                    fill="toself",
+                                    name=row["legend_name"],
+                                    line_color=row["color_hex"],
+                                )
+                            )
 
-                        fig_r.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 1])), title=title_str, template="plotly_white", width=1123, height=794, font=dict(family="Serif", size=14, color="black"), legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"))
-                        zf.writestr(f"{safe_conf_name}-Oekonomie_Radar.pdf", fig_r.to_image(format="pdf"))
+                        fig_r.update_layout(
+                            polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+                            title=title_str,
+                            template="plotly_white",
+                            width=1123,
+                            height=794,
+                            font=dict(family="Serif", size=14, color="black"),
+                            legend=dict(
+                                orientation="h", y=-0.15, x=0.5, xanchor="center"
+                            ),
+                        )
+                        zf.writestr(
+                            f"{safe_conf_name}-Oekonomie_Radar.pdf",
+                            fig_r.to_image(format="pdf"),
+                        )
 
                 # --- EXPORT 3: DETAILS (L1, L2, L3) ---
                 if "Detail-Phasen (Tab 1)" in export_selection:
                     for ph in PHASES:
                         fig_s = create_single_phase_figure(
-                            df_sub, ph, acc_class, y_limit, y_shift, bottom_plot_mode,
-                            show_err_bars, title_prefix=f"{current_title_str}",
-                            nticks_x=nticks_x, nticks_y=nticks_y
+                            df_sub,
+                            ph,
+                            acc_class,
+                            y_limit,
+                            y_shift,
+                            bottom_plot_mode,
+                            show_err_bars,
+                            title_prefix=f"{current_title_str}",
+                            nticks_x=nticks_x,
+                            nticks_y=nticks_y,
                         )
                         zf.writestr(
                             f"{safe_conf_name}-Detail_{ph}_MultiCurrent.pdf",
@@ -2527,14 +2849,44 @@ if "zip_data" in st.session_state:
 # --- SPEICHER-LOGIK ---
 # =======================================================
 if st.session_state.get("trigger_save", False):
-    current_colors = map_color if 'map_color' in locals() else st.session_state.get("loaded_colors", {})
-    current_legends = map_legend if 'map_legend' in locals() else st.session_state.get("loaded_legends", {})
-    current_styles = map_style if 'map_style' in locals() else st.session_state.get("loaded_styles", {})
-    current_symbols = map_symbol if 'map_symbol' in locals() else st.session_state.get("loaded_symbols", {})
-    current_widths = map_width if 'map_width' in locals() else st.session_state.get("loaded_widths", {})
-    current_visible = map_visible if 'map_visible' in locals() else st.session_state.get("loaded_visible", {})
-    current_sizes = map_size if 'map_size' in locals() else st.session_state.get("loaded_sizes", {})
-    current_titles = TITLES_MAP if 'TITLES_MAP' in locals() else st.session_state.get("loaded_titles", {})
+    current_colors = (
+        map_color
+        if "map_color" in locals()
+        else st.session_state.get("loaded_colors", {})
+    )
+    current_legends = (
+        map_legend
+        if "map_legend" in locals()
+        else st.session_state.get("loaded_legends", {})
+    )
+    current_styles = (
+        map_style
+        if "map_style" in locals()
+        else st.session_state.get("loaded_styles", {})
+    )
+    current_symbols = (
+        map_symbol
+        if "map_symbol" in locals()
+        else st.session_state.get("loaded_symbols", {})
+    )
+    current_widths = (
+        map_width
+        if "map_width" in locals()
+        else st.session_state.get("loaded_widths", {})
+    )
+    current_visible = (
+        map_visible
+        if "map_visible" in locals()
+        else st.session_state.get("loaded_visible", {})
+    )
+    current_sizes = (
+        map_size if "map_size" in locals() else st.session_state.get("loaded_sizes", {})
+    )
+    current_titles = (
+        TITLES_MAP
+        if "TITLES_MAP" in locals()
+        else st.session_state.get("loaded_titles", {})
+    )
 
     snapshot_data = {
         "current": st.session_state.get("k_current", []),
@@ -2558,7 +2910,7 @@ if st.session_state.get("trigger_save", False):
         "custom_titles": current_titles,
         "eco_x": st.session_state.get("k_eco_x", "Preis (€)"),
         "eco_y": st.session_state.get("k_eco_y", ["Fehler Nennstrom"]),
-        "eco_type": st.session_state.get("k_eco_type", "Scatter")
+        "eco_type": st.session_state.get("k_eco_type", "Scatter"),
     }
 
     save_name = st.session_state["save_name"]
