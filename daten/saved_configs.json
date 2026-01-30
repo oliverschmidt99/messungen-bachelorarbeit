@@ -963,10 +963,10 @@
         "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "#FF8300"
       },
       "custom_legends": {
-        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO ALO 12070 | 3000 A | 0,0 Ω | Parallel",
-        "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO 12070 K | 3000 A | 0,0 Ω | Parallel ",
+        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO ALO 12070 | 4000 A | 0,0 Ω | Parallel",
+        "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO 12070 K | 4000 A | 0,0 Ω | Parallel ",
         "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO 12070 K | 4000 A | 10,8 Ω | Dreieck ",
-        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO ALO 12070 | 3000 A | 0,0 Ω | Dreieck"
+        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO ALO 12070 | 4000 A | 0,0 Ω | Dreieck"
       },
       "custom_styles": {
         "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "solid",
@@ -1055,8 +1055,8 @@
       "custom_styles": {
         "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "solid",
         "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "solid",
-        "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "longdash",
-        "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "longdash"
+        "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "dot",
+        "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "dot"
       },
       "custom_symbols": {
         "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "circle",
