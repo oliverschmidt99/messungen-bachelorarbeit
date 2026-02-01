@@ -333,12 +333,10 @@
         "Dreieck"
       ],
       "wandlers": [
-        "Celsa 2025_12_09_1030-Celsa-ALO_12070-3000A-10R8",
-        "Celsa 2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8",
         "Celsa 2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8",
-        "Celsa 2025_12_10_1302-Celsa-ALO_12070-3000A-10R8",
-        "Celsa 2025_12_11_1000-Celsa-ALO_12070-3000A-0R0",
-        "Celsa 2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0"
+        "Celsa 2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8",
+        "Celsa 2025_12_09_1030-Celsa-ALO_12070-3000A-10R8",
+        "Celsa 2025_12_10_1302-Celsa-ALO_12070-3000A-10R8"
       ],
       "duts": [
         "PAC2"
@@ -352,56 +350,42 @@
       "bottom_plot_mode": "Ausblenden",
       "custom_colors": {
         "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "#1F4E8A",
-        "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | PAC2": "#1CAB10",
-        "2025_12_11_1000-Celsa-ALO_12070-3000A-0R0_sortiert.csv | PAC2": "#ED0505",
         "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "#FF8300",
         "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "#FF8300",
         "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "#1F4E8A"
       },
       "custom_legends": {
         "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "Celsa ALO_12070_K | 3000 A | 10,8 Ω | Parallel",
-        "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | PAC2": "Celsa ALO_12070 | 3000 A | 10,8 Ω | Parallel | L2 = 0 Ω",
-        "2025_12_11_1000-Celsa-ALO_12070-3000A-0R0_sortiert.csv | PAC2": "Celsa ALO_12070 | 3000 A | 0,0 Ω | Parallel",
         "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "Celsa ALO_12070 | 3000 A | 10,8 Ω | Parallel ",
         "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "Celsa ALO_12070 | 3000 A | 10,8 Ω | Dreieck",
         "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "Celsa ALO_12070_K | 3000 A | 10,8 Ω | Dreieck"
       },
       "custom_styles": {
         "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "solid",
-        "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | PAC2": "dash",
-        "2025_12_11_1000-Celsa-ALO_12070-3000A-0R0_sortiert.csv | PAC2": "dashdot",
         "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "solid",
         "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "dot",
         "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "dot"
       },
       "custom_symbols": {
         "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "circle",
-        "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | PAC2": "circle",
-        "2025_12_11_1000-Celsa-ALO_12070-3000A-0R0_sortiert.csv | PAC2": "circle",
         "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "circle",
         "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "triangle-up",
         "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": "triangle-up"
       },
       "custom_widths": {
         "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": 1.0,
-        "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | PAC2": 1.0,
-        "2025_12_11_1000-Celsa-ALO_12070-3000A-0R0_sortiert.csv | PAC2": 1.0,
         "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": 1.0,
         "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": 1.0,
         "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": 1.0
       },
       "custom_visible": {
         "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": true,
-        "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | PAC2": true,
-        "2025_12_11_1000-Celsa-ALO_12070-3000A-0R0_sortiert.csv | PAC2": true,
         "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": true,
         "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": true,
         "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": true
       },
       "custom_sizes": {
         "2025_12_10_1122-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": 8,
-        "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | PAC2": 8,
-        "2025_12_11_1000-Celsa-ALO_12070-3000A-0R0_sortiert.csv | PAC2": 8,
         "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": 8,
         "2025_12_09_1030-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": 12,
         "2025_12_10_1009-Celsa-ALO_12070_K-3000A-10R8_sortiert.csv | PAC2": 12
@@ -1530,9 +1514,9 @@
         "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "#FF8300"
       },
       "custom_legends": {
-        "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | PAC2": "Celsa ALO_12070 | 3000 A | 10,8 Ω | Parallel | L2 = 0 Ω",
-        "2025_12_11_1000-Celsa-ALO_12070-3000A-0R0_sortiert.csv | PAC2": "Celsa ALO_12070 | 3000 A | 0,0 Ω | Parallel",
-        "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "Celsa ALO_12070 | 3000 A | 10,8 Ω | Parallel "
+        "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | PAC2": "Celsa ALO 12070 | 3000 A | Asymmetrische Last (L2 = 0 Ω)",
+        "2025_12_11_1000-Celsa-ALO_12070-3000A-0R0_sortiert.csv | PAC2": "Celsa ALO 12070 | 3000 A | Minimallast 0 Ω",
+        "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": "Celsa ALO 12070 | 3000 A | Referenzlast 10,8 Ω"
       },
       "custom_styles": {
         "2025_12_10_1402-Celsa-ALO_12070-3000A-10R8-L2_0_sortiert.csv | PAC2": "dash",
@@ -1560,7 +1544,7 @@
         "2025_12_10_1302-Celsa-ALO_12070-3000A-10R8_sortiert.csv | PAC2": 8
       },
       "custom_titles": {
-        "Gesamtübersicht (Tab 1)": "3000 A | Fehlerkurve | Parallel und Dreieck ",
+        "Gesamtübersicht (Tab 1)": "3000 A | Fehlerkurve | Parallelanordnung mit unterschiedlichen Bürdenwiderständen ",
         "Scatter-Plot": "3000 A | Scatter-Plot | Kosten-Nutzen-Analyse",
         "Performance-Index": "3000 A | Performance-Index | Ranking",
         "Heatmap": "3000 A | Heatmap | Fehlerverteilung",
@@ -1571,8 +1555,8 @@
       "eco_x": "Volumen (dm³)",
       "eco_y": [
         "Fehler Nennstrom",
-        "Fehler Niederstrom",
-        "Fehler Überlast"
+        "Fehler Überlast",
+        "Fehler Niederstrom"
       ],
       "eco_type": "Scatter"
     }
