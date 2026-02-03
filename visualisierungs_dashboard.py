@@ -1825,11 +1825,30 @@ with tab2:
         st.session_state["fig_snapshot_tab2"] = fig_eco
         st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Scatter-Plot"
 
-    # --- TAB: RANKING (PERFORMANCE INDEX) ---
+# --- TAB: RANKING (PERFORMANCE INDEX) ---
     with t_bar:
         title_str = TITLES_MAP.get(
             "Performance-Index", "Performance Index (Niedriger ist besser)"
         )
+        
+        # --- ANPASSUNG: Farben und Reihenfolge ---
+        CUSTOM_COLORS = {
+            "Preis (€)": "green",             # Grün
+            "Volumen (Gesamt)": "brown",       # Braun
+            "Fehler Niederstrom": "darkblue",  # Dunkelblau (Niederstrom)
+            "Fehler Nennstrom": "orange",      # Orange (Nennstrom)
+            "Fehler Überlast": "red"           # Rot (Überlast)
+        }
+        
+        # Gewünschte Sortierung (Priorität)
+        CUSTOM_ORDER = [
+            "Preis (€)", 
+            "Volumen (Gesamt)", 
+            "Fehler Niederstrom", 
+            "Fehler Nennstrom", 
+            "Fehler Überlast"
+        ]
+
         norm_cols = []
         df_err["total_score"] = 0.0
 
@@ -1844,6 +1863,7 @@ with tab2:
             norm_cols.append(label)
 
         df_sorted = df_err.sort_values("total_score", ascending=True)
+        
         df_long = df_sorted.melt(
             id_vars=["legend_name"],
             value_vars=norm_cols,
@@ -1858,16 +1878,27 @@ with tab2:
             color="Kategorie",
             orientation="h",
             title=title_str,
+            # Hier werden Farben und Reihenfolge angewendet
+            color_discrete_map=CUSTOM_COLORS,
+            category_orders={"Kategorie": CUSTOM_ORDER}
         )
+        
         fig_eco.update_layout(
             yaxis=dict(autorange="reversed"),
-            legend=legend_layout_bottom,  # LEGENDE UNTEN
+            legend=dict(
+                orientation="h",
+                y=-0.25, 
+                x=0.5, 
+                xanchor="center",
+                bgcolor="rgba(255,255,255,0.8)",
+                # Hier die Schriftanpassung (Dicker / Größer)
+                font=dict(size=14, color="black", family="Arial Black")
+            ),
         )
         st.plotly_chart(fig_eco, use_container_width=True)
 
         st.session_state["fig_snapshot_tab2"] = fig_eco
         st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Performance-Index"
-
     # --- TAB: HEATMAP ---
     with t_heat:
         title_str = TITLES_MAP.get("Heatmap", "Werte-Heatmap")
@@ -2941,12 +2972,33 @@ if trigger_export_btn:
                                 fig_eco.to_image(format="pdf"),
                             )
 
-                        # --- C2) RANKING ---
+                        # --- C2) RANKING (Performance Index) ---
                         if "Ökonomie: Performance-Index" in export_selection:
                             t_rank = b_titles.get("Performance-Index", "Ranking")
                             df_rank = df_agg.copy()
                             df_rank["total_score"] = 0.0
+                            
+                            # --- 1. FARBEN & REIHENFOLGE DEFINIEREN ---
+                            # Anpassung: Preis auf Grün geändert für besseren Kontrast zu Braun
+                            ECO_COLORS_EXPORT = {
+                                "Preis (€)": "#2ca02c",             # Neu: Grün (statt Violett)
+                                "Volumen (Gesamt)": "#8c564b",      # Braun
+                                "Fehler Niederstrom": "#000080",    # Dunkelblau
+                                "Fehler Nennstrom": "#ffbf00",      # Orange (Amber)
+                                "Fehler Überlast": "#ff0000"        # Rot
+                            }
+                            
+                            # Die Reihenfolge der Stacks im Balken
+                            ECO_ORDER_EXPORT = [
+                                "Preis (€)", 
+                                "Volumen (Gesamt)", 
+                                "Fehler Niederstrom", 
+                                "Fehler Nennstrom", 
+                                "Fehler Überlast"
+                            ]
+
                             norm_cols = []
+                            # Daten normalisieren und Score berechnen
                             for k in k_eco_y:
                                 if k in Y_OPT_EXP:
                                     rc = Y_OPT_EXP[k]
@@ -2957,36 +3009,64 @@ if trigger_export_btn:
                                     df_rank["total_score"] += df_rank[k]
                                     norm_cols.append(k)
 
+                            # Sortieren nach Gesamt-Score (Beste oben)
                             df_rank = df_rank.sort_values("total_score", ascending=True)
 
-                            # PDF
+                            # Daten für Plotly aufbereiten (Wide -> Long Format)
                             df_l = df_rank.melt(
                                 id_vars=["legend_name"],
                                 value_vars=norm_cols,
                                 value_name="Anteil",
+                                var_name="Kategorie" # Wichtig für die Legende
                             )
+
+                            # --- 2. PLOT ERSTELLEN (Mit Custom Colors & Style) ---
                             fig_bar = px.bar(
                                 df_l,
                                 y="legend_name",
                                 x="Anteil",
-                                color="variable",
+                                color="Kategorie",
                                 orientation="h",
                                 title=t_rank,
-                                color_discrete_sequence=px.colors.qualitative.Safe,
+                                # Hier werden deine Farben und die Reihenfolge erzwungen:
+                                color_discrete_map=ECO_COLORS_EXPORT,
+                                category_orders={"Kategorie": ECO_ORDER_EXPORT}
                             )
+                            
+                            # --- 3. LAYOUT ANPASSEN (Schriftgröße & Balkendicke) ---
                             fig_bar.update_layout(
-                                yaxis=dict(autorange="reversed"),
+                                yaxis=dict(
+                                    autorange="reversed",
+                                    # Schriftgröße der Wandler-Namen (Y-Achse) vergrößern:
+                                    tickfont=dict(size=10, family="Arial"),
+                                    title=None # "legend_name" Label ausblenden für mehr Platz
+                                ),
+                                xaxis=dict(
+                                    title="Anteil am Score (%)",
+                                    tickfont=dict(size=10)
+                                ),
                                 template="plotly_white",
                                 width=1123,
                                 height=794,
-                                legend=dict(orientation="h", y=-0.15),
+                                # bargap vergrößern macht die Balken dünner (0.4 = 40% Platz zwischen Balken)
+                                bargap=0.4, 
+                                legend=dict(
+                                    orientation="h", 
+                                    y=-0.15, 
+                                    x=0.5, 
+                                    xanchor="center",
+                                    font=dict(size=12, family="Arial Black") # Legende etwas fetter
+                                ),
+                                margin=dict(l=200) # Mehr Platz links für lange Namen
                             )
+                            
+                            # PDF speichern
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Ranking.pdf",
                                 fig_bar.to_image(format="pdf"),
                             )
 
-                            # LATEX
+                            # LATEX Export (unverändert, nutzt Daten)
                             ltx = []
                             ltx.append(r"\begin{table}[H]")
                             ltx.append(r"    \centering")
@@ -3031,7 +3111,6 @@ if trigger_export_btn:
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Ranking.tex",
                                 "\n".join(ltx),
                             )
-
                         # --- C3) HEATMAP ---
                         if "Ökonomie: Heatmap" in export_selection:
                             t_heat = b_titles.get("Heatmap", "Heatmap")
