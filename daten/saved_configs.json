@@ -163,9 +163,15 @@
         "Celsa 2025_12_05_1356-Celsa-ALO_10030-2000A-1R35",
         "Celsa 2025_12_08_0856-Celsa-ALO_10030-2000A-1R35",
         "Celsa 2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1",
-        "MBS 2025_12_08_1121-MBS-ASK101.4-2000A-8R1"
+        "MBS 2025_12_04_1415-MBS-ASK101.4-2000A-8R1",
+        "MBS 2025_12_08_1121-MBS-ASK101.4-2000A-8R1",
+        "Redur 2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1",
+        "Redur 2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0",
+        "Redur 2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1",
+        "Redur 2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0"
       ],
       "duts": [
+        "K3",
         "PAC1",
         "PAC2"
       ],
@@ -177,53 +183,95 @@
       "show_err_bars": true,
       "bottom_plot_mode": "Standardabweichung",
       "custom_colors": {
-        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "#1f4e8c",
-        "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "#2c6fb2",
-        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "#8c4a2f",
-        "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "#a65a2a",
-        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "#c96a2a"
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | K3": "#1f4e8c",
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "#2c6fb2",
+        "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "#4a8fd1",
+        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": "#6aa9e3",
+        "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": "#8fc0ee",
+        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "#b3d5f7",
+        "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "#8c4a2f",
+        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "#a65a2a",
+        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "#c96a2a",
+        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": "#e07b39",
+        "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": "#f28e4b"
       },
       "custom_legends": {
-        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "Celsa 2025 12 05 1356-Celsa-ALO 10030-2000A-1R35 | PAC2 | Parallel (2000A)",
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | K3": "MBS 2025 12 04 1415-MBS-ASK101.4-2000A-8R1 | K3 | Parallel | 0 (2000A)",
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "MBS 2025 12 04 1415-MBS-ASK101.4-2000A-8R1 | PAC2 | Parallel | 0 (2000A)",
         "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "Celsa 2025 12 04 1506-Celsa-ALO 8030 K-2000A-8R1 | PAC2 | Parallel (2000A)",
-        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "MBS 2025 12 08 1121-MBS-ASK101.4-2000A-8R1 | PAC2 | Dreieck (2000A)",
+        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": "Redur 2025 12 05 1020-Redur-13A1030.3ffp-2000A-8R1 | PAC2 | Parallel (2000A)",
+        "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": "Redur 2025 12 05 1057-Redur-13A1030.3ffp-2000A-0R0 | PAC2 | Parallel (2000A)",
+        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "Celsa 2025 12 05 1356-Celsa-ALO 10030-2000A-1R35 | PAC2 | Parallel (2000A)",
         "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "Celsa 2025 12 08 0856-Celsa-ALO 10030-2000A-1R35 | PAC2 | Dreieck (2000A)",
-        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "Celsa 2025 12 08 1026-Celsa-ALO 8030 K-2000A-8R1 | PAC2 | Dreieck (2000A)"
+        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "Celsa 2025 12 08 1026-Celsa-ALO 8030 K-2000A-8R1 | PAC2 | Dreieck (2000A)",
+        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "MBS 2025 12 08 1121-MBS-ASK101.4-2000A-8R1 | PAC2 | Dreieck (2000A)",
+        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": "Redur 2025 12 08 1219-Redur-13A1030.3ffp-2000A-8R1 | PAC2 | Dreieck (2000A)",
+        "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": "Redur 2025 12 08 1305-Redur-13A1030.3ffp-2000A-0R0 | PAC2 | Dreieck (2000A)"
       },
       "custom_styles": {
-        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "solid",
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | K3": "solid",
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "solid",
         "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "solid",
-        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "solid",
+        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": "solid",
+        "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": "solid",
+        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "solid",
         "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "solid",
-        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "solid"
+        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "solid",
+        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "solid",
+        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": "solid",
+        "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": "solid"
       },
       "custom_symbols": {
-        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "circle",
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | K3": "circle",
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "circle",
         "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "circle",
-        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "circle",
+        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": "circle",
+        "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": "circle",
+        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "circle",
         "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": "circle",
-        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "circle"
+        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": "circle",
+        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": "circle",
+        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": "circle",
+        "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": "circle"
       },
       "custom_widths": {
-        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": 2.5,
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | K3": 2.5,
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": 2.5,
         "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": 2.5,
-        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": 2.5,
+        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": 2.5,
+        "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": 2.5,
+        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": 2.5,
         "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": 2.5,
-        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": 2.5
+        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": 2.5,
+        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": 2.5,
+        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": 2.5,
+        "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": 2.5
       },
       "custom_visible": {
-        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": true,
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | K3": true,
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": true,
         "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": true,
-        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": true,
+        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": true,
+        "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": true,
+        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": true,
         "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": true,
-        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": true
+        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": true,
+        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": true,
+        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": true,
+        "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": true
       },
       "custom_sizes": {
-        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": 8,
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | K3": 8,
+        "2025_12_04_1415-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": 8,
         "2025_12_04_1506-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": 8,
-        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": 8,
+        "2025_12_05_1020-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": 8,
+        "2025_12_05_1057-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": 8,
+        "2025_12_05_1356-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": 8,
         "2025_12_08_0856-Celsa-ALO_10030-2000A-1R35_sortiert.csv | PAC2": 8,
-        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": 8
+        "2025_12_08_1026-Celsa-ALO_8030_K-2000A-8R1_sortiert.csv | PAC2": 8,
+        "2025_12_08_1121-MBS-ASK101.4-2000A-8R1_sortiert.csv | PAC2": 8,
+        "2025_12_08_1219-Redur-13A1030.3ffp-2000A-8R1_sortiert.csv | PAC2": 8,
+        "2025_12_08_1305-Redur-13A1030.3ffp-2000A-0R0_sortiert.csv | PAC2": 8
       },
       "custom_titles": {
         "Gesamtübersicht (Tab 1)": "2000 A | Fehlerkurve |  | Phasen-Vergleich",
@@ -234,10 +282,9 @@
         "Pareto": "2000 A | Pareto | Fehler-Ursachen",
         "Radar": "2000 A | Radar | Multi-Kriteriell"
       },
-      "eco_x": "Preis (€)",
+      "eco_x": "Volumen (dm³)",
       "eco_y": [
-        "Breite (B)",
-        "Preis (€)"
+        "Fehler Nennstrom"
       ],
       "eco_type": "Scatter"
     },
@@ -975,46 +1022,46 @@
       "show_err_bars": true,
       "bottom_plot_mode": "Ausblenden",
       "custom_colors": {
-        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "#FF8300",
         "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "#1F4E8B",
-        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "#1F4E8B",
-        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "#FF8300"
+        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "#FF8300",
+        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "#FF8300",
+        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "#1F4E8B"
       },
       "custom_legends": {
-        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO ALO 12070 | 4000 A | 0,0 Ω | Parallel",
         "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO 12070 K | 4000 A | 0,0 Ω | Parallel ",
-        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO 12070 K | 4000 A | 10,8 Ω | Dreieck ",
-        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO ALO 12070 | 4000 A | 0,0 Ω | Dreieck"
+        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO ALO 12070 | 4000 A | 0,0 Ω | Parallel",
+        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO ALO 12070 | 4000 A | 0,0 Ω | Dreieck",
+        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "Celsa ALO 12070 K | 4000 A | 0,0 Ω | Dreieck "
       },
       "custom_styles": {
-        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "solid",
         "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "solid",
-        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "dot",
-        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "dot"
+        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "solid",
+        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "dot",
+        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "dot"
       },
       "custom_symbols": {
-        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "circle",
         "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "circle",
-        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "triangle-up",
-        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "triangle-up"
+        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "circle",
+        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": "triangle-up",
+        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": "triangle-up"
       },
       "custom_widths": {
-        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": 1.0,
         "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": 1.0,
-        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": 1.0,
-        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": 1.0
+        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": 1.0,
+        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": 1.0,
+        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": 1.0
       },
       "custom_visible": {
-        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": true,
         "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": true,
-        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": true,
-        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": true
+        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": true,
+        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": true,
+        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": true
       },
       "custom_sizes": {
-        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": 8,
         "2025_12_16_0812-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": 8,
-        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": 12,
-        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": 12
+        "2025_12_16_1020-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": 8,
+        "2025_12_16_1140-Celsa-ALO_12070-4000A-0R0_sortiert.csv | PAC2": 12,
+        "2025_12_16_1315-Celsa-ALO_12070_K-4000A-0R0_sortiert.csv | PAC2": 12
       },
       "custom_titles": {
         "Gesamtübersicht (Tab 1)": "4000 A | Fehlerkurve | Parallel und Dreieck ",

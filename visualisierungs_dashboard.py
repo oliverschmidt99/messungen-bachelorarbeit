@@ -2664,6 +2664,13 @@ if trigger_export_btn:
         progress_text = st.empty()
         prog_bar = st.progress(0)
 
+        # --- GLOBALE STYLE DEFINITIONEN FÜR DEN EXPORT ---
+        # Hier zentral ändern für alle Diagramme
+        TITLE_FONT = dict(size=16, family="Arial Black", color="black")
+        LEGEND_FONT = dict(size=14, family="Arial Black", color="black")
+        TICK_FONT = dict(size=12, family="Arial", color="black")
+        AXIS_TITLE_FONT = dict(size=10, family="Arial", color="black")
+
         # --- HILFSFUNKTIONEN (Innerhalb Scope) ---
         def clean_tex_and_break(text):
             text = str(text)
@@ -2828,15 +2835,19 @@ if trigger_export_btn:
                             "Gesamtübersicht (Tab 1)", f"Gesamtübersicht: {curr_str}"
                         )
                         fig_main.update_layout(
-                            title=t_title,
+                            title=dict(text=t_title, font=TITLE_FONT),
                             template="plotly_white",
                             height=800,
                             width=1123,
                             font=dict(family="Serif", size=14, color="black"),
                             legend=dict(
-                                orientation="h", y=-0.15, x=0.5, xanchor="center"
+                                orientation="h", y=-0.15, x=0.5, xanchor="center",
+                                font=LEGEND_FONT
                             ),
                         )
+                        # Achsen Fonts anpassen
+                        fig_main.update_xaxes(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT)
+                        fig_main.update_yaxes(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT)
 
                         y_min = -b_ylim + b_yshift
                         y_max = b_ylim + b_yshift
@@ -2860,6 +2871,15 @@ if trigger_export_btn:
                                 b_show_err,
                                 title_prefix=f"{curr_str}",
                             )
+                            # Update Layout für einheitlichen Style
+                            fig_s.update_layout(
+                                title=dict(font=TITLE_FONT),
+                                legend=dict(font=LEGEND_FONT),
+                                font=dict(family="Serif", size=14, color="black")
+                            )
+                            fig_s.update_xaxes(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT)
+                            fig_s.update_yaxes(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT)
+
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Detail_{ph}_MultiCurrent.pdf",
                                 fig_s.to_image(format="pdf", width=1123, height=794),
@@ -2956,16 +2976,19 @@ if trigger_export_btn:
                                 symbol="Metrik",
                                 size=[15] * len(df_long),
                                 color_discrete_map=col_map,
-                                title=t_scat,
                             )
                             fig_eco.update_layout(
+                                title=dict(text=t_scat, font=TITLE_FONT),
                                 template="plotly_white",
                                 width=1123,
                                 height=794,
                                 font=dict(family="Serif", size=14),
                                 legend=dict(
-                                    orientation="h", y=-0.15, x=0.5, xanchor="center"
+                                    orientation="h", y=-0.15, x=0.5, xanchor="center",
+                                    font=LEGEND_FONT
                                 ),
+                                xaxis=dict(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT),
+                                yaxis=dict(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT),
                             )
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Scatter.pdf",
@@ -2978,132 +3001,93 @@ if trigger_export_btn:
                             df_rank = df_agg.copy()
                             df_rank["total_score"] = 0.0
                             
-                            # --- 1. FARBEN & REIHENFOLGE DEFINIEREN ---
-                            # Anpassung: Preis auf Grün geändert für besseren Kontrast zu Braun
+                            # Farben für Ranking
                             ECO_COLORS_EXPORT = {
-                                "Preis (€)": "#2ca02c",             # Neu: Grün (statt Violett)
+                                "Preis (€)": "#2ca02c",             # Grün
                                 "Volumen (Gesamt)": "#8c564b",      # Braun
                                 "Fehler Niederstrom": "#000080",    # Dunkelblau
-                                "Fehler Nennstrom": "#ffbf00",      # Orange (Amber)
+                                "Fehler Nennstrom": "#ffbf00",      # Orange
                                 "Fehler Überlast": "#ff0000"        # Rot
                             }
-                            
-                            # Die Reihenfolge der Stacks im Balken
                             ECO_ORDER_EXPORT = [
-                                "Preis (€)", 
-                                "Volumen (Gesamt)", 
-                                "Fehler Niederstrom", 
-                                "Fehler Nennstrom", 
-                                "Fehler Überlast"
+                                "Preis (€)", "Volumen (Gesamt)", 
+                                "Fehler Niederstrom", "Fehler Nennstrom", "Fehler Überlast"
                             ]
 
                             norm_cols = []
-                            # Daten normalisieren und Score berechnen
                             for k in k_eco_y:
                                 if k in Y_OPT_EXP:
                                     rc = Y_OPT_EXP[k]
                                     mx = df_rank[rc].abs().max()
-                                    if mx == 0:
-                                        mx = 1
+                                    if mx == 0: mx = 1
                                     df_rank[k] = (df_rank[rc].abs() / mx) * 100
                                     df_rank["total_score"] += df_rank[k]
                                     norm_cols.append(k)
 
-                            # Sortieren nach Gesamt-Score (Beste oben)
                             df_rank = df_rank.sort_values("total_score", ascending=True)
-
-                            # Daten für Plotly aufbereiten (Wide -> Long Format)
                             df_l = df_rank.melt(
-                                id_vars=["legend_name"],
-                                value_vars=norm_cols,
-                                value_name="Anteil",
-                                var_name="Kategorie" # Wichtig für die Legende
+                                id_vars=["legend_name"], value_vars=norm_cols,
+                                value_name="Anteil", var_name="Kategorie"
                             )
 
-                            # --- 2. PLOT ERSTELLEN (Mit Custom Colors & Style) ---
                             fig_bar = px.bar(
-                                df_l,
-                                y="legend_name",
-                                x="Anteil",
-                                color="Kategorie",
+                                df_l, y="legend_name", x="Anteil", color="Kategorie",
                                 orientation="h",
-                                title=t_rank,
-                                # Hier werden deine Farben und die Reihenfolge erzwungen:
                                 color_discrete_map=ECO_COLORS_EXPORT,
                                 category_orders={"Kategorie": ECO_ORDER_EXPORT}
                             )
                             
-                            # --- 3. LAYOUT ANPASSEN (Schriftgröße & Balkendicke) ---
                             fig_bar.update_layout(
+                                title=dict(text=t_rank, font=TITLE_FONT),
                                 yaxis=dict(
                                     autorange="reversed",
-                                    # Schriftgröße der Wandler-Namen (Y-Achse) vergrößern:
-                                    tickfont=dict(size=10, family="Arial"),
-                                    title=None # "legend_name" Label ausblenden für mehr Platz
+                                    tickfont=dict(size=14, family="Arial Black", color="black"), # Hier Arial Black wie gewünscht für Hersteller
+                                    title=None 
                                 ),
                                 xaxis=dict(
                                     title="Anteil am Score (%)",
-                                    tickfont=dict(size=10)
+                                    tickfont=TICK_FONT,
+                                    title_font=AXIS_TITLE_FONT
                                 ),
                                 template="plotly_white",
                                 width=1123,
                                 height=794,
-                                # bargap vergrößern macht die Balken dünner (0.4 = 40% Platz zwischen Balken)
                                 bargap=0.4, 
                                 legend=dict(
-                                    orientation="h", 
-                                    y=-0.15, 
-                                    x=0.5, 
-                                    xanchor="center",
-                                    font=dict(size=12, family="Arial Black") # Legende etwas fetter
+                                    orientation="h", y=-0.15, x=0.5, xanchor="center",
+                                    font=LEGEND_FONT
                                 ),
-                                margin=dict(l=200) # Mehr Platz links für lange Namen
+                                margin=dict(l=200)
                             )
                             
-                            # PDF speichern
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Ranking.pdf",
                                 fig_bar.to_image(format="pdf"),
                             )
 
-                            # LATEX Export (unverändert, nutzt Daten)
+                            # LATEX Export
                             ltx = []
                             ltx.append(r"\begin{table}[H]")
                             ltx.append(r"    \centering")
                             ltx.append(rf"    \caption{{{t_rank}}}")
-                            ltx.append(
-                                rf"    \label{{tab:{sanitize_filename(conf_name)}_ranking}}"
-                            )
+                            ltx.append(rf"    \label{{tab:{sanitize_filename(conf_name)}_ranking}}")
                             col_def = "p{6cm}" + "c" * (len(norm_cols) + 1)
                             ltx.append(rf"    \begin{{tabular}}{{{col_def}}}")
                             ltx.append(r"        \toprule")
-
                             h_cells = [r"\textbf{Messsystem}"]
                             for cn in norm_cols:
-                                cc = (
-                                    cn.replace("%", r"\%")
-                                    .replace("_", r"\_")
-                                    .replace("Ω", r"$\Omega$")
-                                    .replace(" ", r" \\ ")
-                                )
+                                cc = cn.replace("%", r"\%").replace("_", r"\_").replace("Ω", r"$\Omega$").replace(" ", r" \\ ")
                                 h_cells.append(rf"\textbf{{\shortstack[c]{{{cc}}}}}")
-                            h_cells.append(
-                                r"\textbf{\shortstack[c]{Fehler-Score \\ {[\%]}}}"
-                            )
-
+                            h_cells.append(r"\textbf{\shortstack[c]{Fehler-Score \\ {[\%]}}}")
                             ltx.append("        " + " & ".join(h_cells) + r" \\")
                             ltx.append(r"        \midrule")
-
                             for _, r_row in df_rank.iterrows():
                                 n_cl = clean_tex_and_break(r_row["legend_name"])
                                 r_c = [n_cl]
                                 for cn in norm_cols:
                                     r_c.append(f"{r_row[cn]:.2f}".replace(".", ","))
-                                r_c.append(
-                                    f"{r_row['total_score']:.2f}".replace(".", ",")
-                                )
+                                r_c.append(f"{r_row['total_score']:.2f}".replace(".", ","))
                                 ltx.append("        " + " & ".join(r_c) + r" \\")
-
                             ltx.append(r"        \bottomrule")
                             ltx.append(r"    \end{tabular}")
                             ltx.append(r"\end{table}")
@@ -3111,26 +3095,24 @@ if trigger_export_btn:
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Ranking.tex",
                                 "\n".join(ltx),
                             )
+
                         # --- C3) HEATMAP ---
                         if "Ökonomie: Heatmap" in export_selection:
                             t_heat = b_titles.get("Heatmap", "Heatmap")
                             df_l = df_agg.melt(
-                                id_vars=["legend_name"],
-                                value_vars=sel_y_cols,
-                                value_name="Wert",
+                                id_vars=["legend_name"], value_vars=sel_y_cols, value_name="Wert",
                             )
                             df_l["Kat"] = df_l["variable"].map(REV_Y_EXP)
                             fh = px.density_heatmap(
-                                df_l,
-                                x="legend_name",
-                                y="Kat",
-                                z="Wert",
-                                text_auto=True,
-                                title=t_heat,
-                                color_continuous_scale="Blues",
+                                df_l, x="legend_name", y="Kat", z="Wert",
+                                text_auto=True, color_continuous_scale="Blues",
                             )
                             fh.update_layout(
-                                template="plotly_white", width=1123, height=794
+                                title=dict(text=t_heat, font=TITLE_FONT),
+                                template="plotly_white", width=1123, height=794,
+                                font=dict(family="Serif", size=14),
+                                xaxis=dict(tickfont=dict(size=12, family="Arial Black"), title=None),
+                                yaxis=dict(tickfont=TICK_FONT, title=None)
                             )
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Heatmap.pdf",
@@ -3141,23 +3123,18 @@ if trigger_export_btn:
                         if "Ökonomie: Boxplot" in export_selection:
                             t_box = b_titles.get("Boxplot", "Boxplot")
                             df_l = df_agg.melt(
-                                id_vars=["legend_name"],
-                                value_vars=sel_y_cols,
-                                value_name="Wert",
+                                id_vars=["legend_name"], value_vars=sel_y_cols, value_name="Wert",
                             )
                             df_l["Kat"] = df_l["variable"].map(REV_Y_EXP)
                             fb = px.box(
-                                df_l,
-                                x="legend_name",
-                                y="Wert",
-                                color="Kat",
-                                title=t_box,
+                                df_l, x="legend_name", y="Wert", color="Kat",
                             )
                             fb.update_layout(
-                                template="plotly_white",
-                                width=1123,
-                                height=794,
-                                legend=dict(orientation="h", y=-0.15),
+                                title=dict(text=t_box, font=TITLE_FONT),
+                                template="plotly_white", width=1123, height=794,
+                                legend=dict(orientation="h", y=-0.15, font=LEGEND_FONT),
+                                xaxis=dict(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT),
+                                yaxis=dict(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT),
                             )
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Boxplot.pdf",
@@ -3174,29 +3151,23 @@ if trigger_export_btn:
                             fp = make_subplots(specs=[[{"secondary_y": True}]])
                             fp.add_trace(
                                 go.Bar(
-                                    x=dfs["legend_name"],
-                                    y=dfs[ty],
-                                    name=tl,
+                                    x=dfs["legend_name"], y=dfs[ty], name=tl,
                                     marker_color=dfs["color_hex"],
-                                ),
-                                secondary_y=False,
+                                ), secondary_y=False,
                             )
                             fp.add_trace(
                                 go.Scatter(
-                                    x=dfs["legend_name"],
-                                    y=dfs["cum"],
-                                    name="Cum %",
-                                    mode="lines+markers",
-                                    line=dict(color="red"),
-                                ),
-                                secondary_y=True,
+                                    x=dfs["legend_name"], y=dfs["cum"], name="Cum %",
+                                    mode="lines+markers", line=dict(color="red"),
+                                ), secondary_y=True,
                             )
                             fp.update_layout(
-                                title=t_par,
-                                template="plotly_white",
-                                width=1123,
-                                height=794,
-                                legend=dict(orientation="h", y=-0.15),
+                                title=dict(text=t_par, font=TITLE_FONT),
+                                template="plotly_white", width=1123, height=794,
+                                legend=dict(orientation="h", y=-0.15, font=LEGEND_FONT),
+                                xaxis=dict(tickfont=TICK_FONT),
+                                yaxis=dict(tickfont=TICK_FONT),
+                                yaxis2=dict(tickfont=TICK_FONT)
                             )
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Pareto.pdf",
@@ -3216,20 +3187,16 @@ if trigger_export_btn:
                                 rvals.append(rvals[0])
                                 fr.add_trace(
                                     go.Scatterpolar(
-                                        r=rvals,
-                                        theta=k_eco_y + [k_eco_y[0]],
-                                        fill="toself",
-                                        name=r_row["legend_name"],
+                                        r=rvals, theta=k_eco_y + [k_eco_y[0]],
+                                        fill="toself", name=r_row["legend_name"],
                                         line_color=r_row["color_hex"],
                                     )
                                 )
                             fr.update_layout(
-                                polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
-                                title=t_rad,
-                                template="plotly_white",
-                                width=1123,
-                                height=794,
-                                legend=dict(orientation="h", y=-0.15),
+                                polar=dict(radialaxis=dict(visible=True, range=[0, 1], tickfont=TICK_FONT)),
+                                title=dict(text=t_rad, font=TITLE_FONT),
+                                template="plotly_white", width=1123, height=794,
+                                legend=dict(orientation="h", y=-0.15, font=LEGEND_FONT),
                             )
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Radar.pdf",
@@ -3242,6 +3209,7 @@ if trigger_export_btn:
         st.session_state["zip_data"] = zip_buffer.getvalue()
         st.session_state["zip_name"] = "Batch_Export.zip"
         st.success("✅ Batch-Export bereit!")
+
 
 if "zip_data" in st.session_state:
     st.sidebar.download_button(
