@@ -957,7 +957,6 @@ with st.sidebar.expander("Verwaltung", expanded=True):
                     # 3. Falls Meta-Suche nötig (für Wandler-Keys, die sich geändert haben könnten)
                     missing = set(stored_list) - set(valid)
                     # Wir prüfen nur Items, die wir noch nicht über String-Match gefunden haben
-                    # (Achtung: stored_list items könnten hier noch int/float sein)
 
                     if missing and col_name_in_df:
                         for m in missing:
@@ -1014,6 +1013,12 @@ with st.sidebar.expander("Verwaltung", expanded=True):
                 st.session_state["k_eco_y"] = data.get("eco_y", ["Fehler Nennstrom"])
                 st.session_state["k_eco_type"] = data.get("eco_type", "Scatter")
 
+                # --- NEU: GEWICHTUNG LADEN ---
+                st.session_state["w_low_glob"] = data.get("weight_low", 1.0)
+                st.session_state["w_nom_glob"] = data.get("weight_nom", 1.0)
+                st.session_state["w_high_glob"] = data.get("weight_high", 1.0)
+                # -----------------------------
+
                 st.session_state["loaded_colors"] = data.get("custom_colors", {})
                 st.session_state["loaded_legends"] = data.get("custom_legends", {})
                 st.session_state["loaded_titles"] = data.get("custom_titles", {})
@@ -1030,7 +1035,6 @@ with st.sidebar.expander("Verwaltung", expanded=True):
 
                 st.success(f"'{sel_config_load}' geladen!")
                 st.rerun()
-
     # 1.2 UPDATE (Überschreiben)
     with col_update:
         if st.button("💾 Speichern", use_container_width=True):
@@ -1336,8 +1340,14 @@ with st.sidebar.expander("Diagramm-Titel bearbeiten", expanded=False):
         },
         {
             "Typ": "Performance-Index",
-            "Default": f"{current_title_str} | Performance-Index | Ranking",
+            "Default": f"{current_title_str} | Performance-Index | Ranking (Normiert)",
         },
+        # --- NEU HINZUGEFÜGT ---
+        {
+            "Typ": "Performance-Index-2",
+            "Default": f"{current_title_str} | Ranking (Absolut) | Ungewichtet",
+        },
+        # -----------------------
         {
             "Typ": "Heatmap",
             "Default": f"{current_title_str} | Heatmap | Fehlerverteilung",
@@ -1581,7 +1591,7 @@ with tab1:
     st.plotly_chart(fig_main, use_container_width=True)
     st.session_state["fig_snapshot_tab1"] = fig_main
 
-# --- NEU: Detaillierte Tabelle mit korrekter Spalten-Beschriftung (Tab 1) ---
+    # --- NEU: Detaillierte Tabelle mit korrekter Spalten-Beschriftung (Tab 1) ---
     st.markdown("---")
 
     # 1. Gewünschte Lastpunkte (als Integer)
@@ -1589,7 +1599,7 @@ with tab1:
 
     # 2. Daten filtern und Typ erzwingen (Wichtig: int casting für saubere Spalten)
     df_points = df_sub[df_sub["target_load"].isin(LOAD_POINTS)].copy()
-    
+
     if not df_points.empty:
         df_points["target_load"] = df_points["target_load"].astype(int)
 
@@ -1597,17 +1607,25 @@ with tab1:
         df_pivot = df_points.pivot_table(
             index=["unique_id", "final_legend", "phase"],
             columns="target_load",
-            values="err_ratio"
+            values="err_ratio",
         ).reset_index()
 
         # 3. Metadaten dazu holen
-        df_meta = df_sub.groupby("unique_id").agg({
-            "Preis (€)": "first",
-            "T (mm)": "first",
-            "B (mm)": "first",
-            "H (mm)": "first"
-        }).reset_index()
-        df_meta["volumen"] = (df_meta["T (mm)"] * df_meta["B (mm)"] * df_meta["H (mm)"]) / 1000.0
+        df_meta = (
+            df_sub.groupby("unique_id")
+            .agg(
+                {
+                    "Preis (€)": "first",
+                    "T (mm)": "first",
+                    "B (mm)": "first",
+                    "H (mm)": "first",
+                }
+            )
+            .reset_index()
+        )
+        df_meta["volumen"] = (
+            df_meta["T (mm)"] * df_meta["B (mm)"] * df_meta["H (mm)"]
+        ) / 1000.0
 
         df_final_t1 = pd.merge(df_pivot, df_meta, on="unique_id", how="left")
 
@@ -1615,17 +1633,18 @@ with tab1:
         df_final_t1["total_score"] = 0.0
         # Wir prüfen, welche der LOAD_POINTS als Spalte existieren
         existing_numeric_cols = [c for c in LOAD_POINTS if c in df_final_t1.columns]
-        
+
         for col in existing_numeric_cols:
             mx = df_final_t1[col].abs().max()
-            if mx == 0: mx = 1.0
+            if mx == 0:
+                mx = 1.0
             df_final_t1["total_score"] += (df_final_t1[col].abs() / mx) * 100
 
         # 5. UMBENENNUNG DER SPALTEN (Fix für die falsche Anzeige)
         # Wir benennen die Zahl-Spalten (100) in Strings ("100% In") um.
         rename_map = {c: f"{c}% In" for c in existing_numeric_cols}
         df_final_t1.rename(columns=rename_map, inplace=True)
-        
+
         # Liste der neuen String-Spalten in korrekter Reihenfolge
         display_cols_points = [rename_map[c] for c in existing_numeric_cols]
 
@@ -1638,7 +1657,11 @@ with tab1:
                 help="Summierte Abweichung (Niedriger ist besser)",
                 format="%.1f",
                 min_value=0,
-                max_value=float(df_final_t1["total_score"].max()) if not df_final_t1.empty else 100,
+                max_value=(
+                    float(df_final_t1["total_score"].max())
+                    if not df_final_t1.empty
+                    else 100
+                ),
             ),
             "Preis (€)": st.column_config.NumberColumn("Preis", format="%.2f €"),
             "volumen": st.column_config.NumberColumn("Volumen", format="%.2f dm³"),
@@ -1647,15 +1670,18 @@ with tab1:
         # Formatierung für die neuen String-Spalten (z.B. "100% In") hinzufügen
         for col_name in display_cols_points:
             col_config[col_name] = st.column_config.NumberColumn(
-                col_name,       # Name fixieren
-                format="%.3f %%" # 3 Nachkommastellen
+                col_name, format="%.3f %%"  # Name fixieren  # 3 Nachkommastellen
             )
 
         # 7. Tabelle anzeigen
         with st.expander("🔢 Detaillierte Datentabelle (Stützstellen)", expanded=True):
             # Exakte Reihenfolge der Spalten definieren
-            cols_order = ["final_legend", "phase"] + display_cols_points + ["total_score", "Preis (€)", "volumen"]
-            
+            cols_order = (
+                ["final_legend", "phase"]
+                + display_cols_points
+                + ["total_score", "Preis (€)", "volumen"]
+            )
+
             # Nur Spalten nehmen, die wirklich da sind
             final_cols_to_show = [c for c in cols_order if c in df_final_t1.columns]
 
@@ -1663,7 +1689,7 @@ with tab1:
                 df_final_t1[final_cols_to_show],
                 use_container_width=True,
                 column_config=col_config,
-                hide_index=True
+                hide_index=True,
             )
     else:
         st.info("Keine Daten an den Stützstellen gefunden.")
@@ -1785,17 +1811,40 @@ with tab2:
         font=dict(size=14),
     )
 
+# --- GEWICHTUNG (GLOBAL FÜR BEIDE RANKINGS) ---
+    st.markdown("#### ⚖️ Gewichtung für Sortierung (Gilt für Normiert & Absolut)")
+    with st.expander("Gewichtung anpassen", expanded=True):
+        c_w1, c_w2, c_w3 = st.columns(3)
+        with c_w1:
+            # WICHTIG: key muss "w_low_glob" heißen, damit das Speichern klappt!
+            w_low = st.number_input("Gewicht Niederstrom", 0.0, 10.0, st.session_state.get("w_low_glob", 1.0), 0.1, key="w_low_glob")
+        with c_w2:
+            w_nom = st.number_input("Gewicht Nennstrom", 0.0, 10.0, st.session_state.get("w_nom_glob", 1.0), 0.1, key="w_nom_glob")
+        with c_w3:
+            w_high = st.number_input("Gewicht Überlast", 0.0, 10.0, st.session_state.get("w_high_glob", 1.0), 0.1, key="w_high_glob")
+
+    # String für Legende/Titel generieren
+    weight_info_str = f"Sortier-Gewichte: Nieder x{w_low}, Nenn x{w_nom}, Überlast x{w_high}"
+
     # --- 4. DIAGRAMM TABS ---
-    t_scat, t_bar, t_heat, t_box, t_par, t_rad = st.tabs(
+    t_scat, t_bar, t_bar_2, t_heat, t_box, t_par, t_rad = st.tabs(
         [
             "🔵 Scatter (Kosten/Nutzen)",
-            "📊 Ranking (Index)",
+            "📊 Ranking (Normiert)",
+            "⚖️ Ranking (Absolut)",
             "🔥 Heatmap",
             "📦 Verteilung",
             "📉 Pareto",
             "🕸️ Radar",
         ]
     )
+
+    # Farben Definition (Global genutzt)
+    COLOR_LOW = "#000080"  # Navy
+    COLOR_NOM = "#FFA500"  # Orange
+    COLOR_HIGH = "#FF0000"  # Rot
+    COLOR_PRICE = "#00aa00"  # Grün
+    COLOR_VOL = "#808080"  # Grau
 
     # --- TAB: SCATTER ---
     with t_scat:
@@ -1819,86 +1868,257 @@ with tab2:
             title=title_str,
             hover_data=["legend_name", "Wert"],
         )
-        fig_eco.update_layout(legend=legend_layout_bottom)  # LEGENDE UNTEN
+        fig_eco.update_layout(legend=legend_layout_bottom)
         st.plotly_chart(fig_eco, use_container_width=True)
 
         st.session_state["fig_snapshot_tab2"] = fig_eco
         st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Scatter-Plot"
 
-# --- TAB: RANKING (PERFORMANCE INDEX) ---
+    # --- TAB: RANKING (PERFORMANCE INDEX / NORMIERT - GEWICHTET) ---
     with t_bar:
-        title_str = TITLES_MAP.get(
-            "Performance-Index", "Performance Index (Niedriger ist besser)"
+        title_base = TITLES_MAP.get(
+            "Performance-Index", "Variantenvergleich (Normiert & Gewichtat)"
         )
-        
-        # --- ANPASSUNG: Farben und Reihenfolge ---
-        CUSTOM_COLORS = {
-            "Preis (€)": "green",             # Grün
-            "Volumen (Gesamt)": "brown",       # Braun
-            "Fehler Niederstrom": "darkblue",  # Dunkelblau (Niederstrom)
-            "Fehler Nennstrom": "orange",      # Orange (Nennstrom)
-            "Fehler Überlast": "red"           # Rot (Überlast)
-        }
-        
-        # Gewünschte Sortierung (Priorität)
-        CUSTOM_ORDER = [
-            "Preis (€)", 
-            "Volumen (Gesamt)", 
-            "Fehler Niederstrom", 
-            "Fehler Nennstrom", 
-            "Fehler Überlast"
+        title_str = f"{title_base}<br><sup>{weight_info_str}</sup>"
+
+        # Mapping und Berechnung Score (für Sortierung)
+        col_nieder = Y_OPTIONS_MAP.get("Fehler Niederstrom", "err_nieder")
+        col_nom = Y_OPTIONS_MAP.get("Fehler Nennstrom", "err_nom")
+        col_high = Y_OPTIONS_MAP.get("Fehler Überlast", "err_high")
+
+        # Helper: Gewicht für eine Kategorie ermitteln
+        def get_weight(cat_name):
+            if "Niederstrom" in cat_name:
+                return w_low
+            if "Nennstrom" in cat_name:
+                return w_nom
+            if "Überlast" in cat_name:
+                return w_high
+            return 1.0  # Preis / Volumen / Andere haben Faktor 1.0
+
+        # Score berechnen (Basis für Sortierung)
+        # Wir summieren hier bereits die gewichteten absoluten Anteile oder nutzen den gewichteten Norm-Wert?
+        # Üblicherweise sortiert man nach dem, was man sieht. Also berechnen wir erst die Norm-Werte.
+
+        # 1. Erstmal sortieren wir grob vor (wird unten verfeinert)
+        df_sorted = df_err.copy()
+
+        # Daten für Plot vorbereiten (Normierung auf Max = 100% * Gewicht)
+        norm_cols = []
+        target_order = [
+            "Fehler Niederstrom",
+            "Fehler Nennstrom",
+            "Fehler Überlast",
+            "Preis (€)",
+            "Volumen (Gesamt)",
         ]
 
-        norm_cols = []
-        df_err["total_score"] = 0.0
+        final_y_selection = [x for x in target_order if x in y_selection]
 
-        for label in y_selection:
+        df_sorted["total_weighted_score"] = 0.0
+
+        for label in final_y_selection:
             raw_col = Y_OPTIONS_MAP[label]
-            mx_val = df_err[raw_col].abs().max()
+            mx_val = df_sorted[raw_col].abs().max()
             if mx_val == 0:
                 mx_val = 1.0
 
-            df_err[label] = (df_err[raw_col].abs() / mx_val) * 100
-            df_err["total_score"] += df_err[label]
-            norm_cols.append(label)
+            # Gewicht holen
+            w = get_weight(label)
 
-        df_sorted = df_err.sort_values("total_score", ascending=True)
-        
+            # Neue Spalte: (Wert / Max) * 100 * GEWICHT
+            plot_col = f"norm_{label}"
+            # Wir nutzen hier .abs(), da Fehler negativ sein können, aber im Balken positiv "schlecht" sind
+            norm_val = (df_sorted[raw_col].abs() / mx_val) * 100 * w
+
+            df_sorted[plot_col] = norm_val
+            df_sorted["total_weighted_score"] += norm_val
+            norm_cols.append(plot_col)
+
+        # Jetzt final sortieren nach dem sichtbaren Score
+        df_sorted = df_sorted.sort_values("total_weighted_score", ascending=True)
+
+        # Melt für Plotly
         df_long = df_sorted.melt(
             id_vars=["legend_name"],
             value_vars=norm_cols,
-            var_name="Kategorie",
-            value_name="Anteil am Score (%)",
+            var_name="Kategorie_Raw",
+            value_name="Gewichteter Score",  # Neuer Name für die Achse
         )
+        df_long["Kategorie"] = df_long["Kategorie_Raw"].str.replace("norm_", "")
+
+        # Farben Map
+        CUSTOM_COLORS = {
+            "Fehler Niederstrom": COLOR_LOW,
+            "Fehler Nennstrom": COLOR_NOM,
+            "Fehler Überlast": COLOR_HIGH,
+            "Preis (€)": COLOR_PRICE,
+            "Volumen (Gesamt)": COLOR_VOL,
+        }
 
         fig_eco = px.bar(
             df_long,
             y="legend_name",
-            x="Anteil am Score (%)",
+            x="Gewichteter Score",
             color="Kategorie",
             orientation="h",
             title=title_str,
-            # Hier werden Farben und Reihenfolge angewendet
+            barmode="group",
             color_discrete_map=CUSTOM_COLORS,
-            category_orders={"Kategorie": CUSTOM_ORDER}
+            category_orders={"Kategorie": target_order},
         )
-        
+
         fig_eco.update_layout(
-            yaxis=dict(autorange="reversed"),
+            yaxis=dict(autorange="reversed", title=None),
+            # Achsenbeschriftung angepasst:
+            xaxis=dict(
+                title="Gewichteter Score-Index (Normiert % * Gewicht)", showgrid=True
+            ),
             legend=dict(
                 orientation="h",
-                y=-0.25, 
-                x=0.5, 
+                y=1.25,
+                x=0.5,
                 xanchor="center",
-                bgcolor="rgba(255,255,255,0.8)",
-                # Hier die Schriftanpassung (Dicker / Größer)
-                font=dict(size=14, color="black", family="Arial Black")
+                bgcolor="rgba(255,255,255,0.9)",
+                font=dict(size=14, color="black"),
+                title=None,
             ),
+            margin=dict(t=140),
+            height=600 if len(df_sorted) < 10 else 800,
         )
-        st.plotly_chart(fig_eco, use_container_width=True)
+        # Mouseover verbessern (zeigt Gewicht an)
+        fig_eco.update_traces(hovertemplate="%{y}<br>Wert: %{x:.1f}<extra></extra>")
 
+        st.plotly_chart(fig_eco, use_container_width=True)
         st.session_state["fig_snapshot_tab2"] = fig_eco
         st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Performance-Index"
+
+    # --- TAB: RANKING 2 (ABSOLUT - UNGEWICHTET) ---
+    with t_bar_2:
+        title_str = TITLES_MAP.get("Performance-Index 2", "Ranking (Absolut)")
+        # Kein Untertitel mit Gewichten, da hier rein physikalisch sortiert wird
+
+        # Achse 2 (Preis oder Volumen)
+        if "Preis" in x_sel:
+            col_sec = "preis"
+            label_sec = "Preis (€)"
+            color_sec = COLOR_PRICE
+        else:
+            col_sec = "volumen"
+            label_sec = "Volumen (dm³)"
+            color_sec = COLOR_VOL
+
+        # Sortierung: Rein nach Summe der absoluten Fehler (Ungewichtet)
+        # Wir erstellen eine lokale Kopie zum Sortieren, damit die Gewichtung von Tab 1 nicht stört
+        df_abs = df_err.copy()
+
+        # Summe der Fehler (Betrag) für Sortierung
+        # Je kleiner die Summe der Fehler, desto weiter oben
+        df_abs["abs_error_sum"] = (
+            df_abs[col_nieder].abs() + df_abs[col_nom].abs() + df_abs[col_high].abs()
+        )
+
+        # Sortieren: Beste (kleinster Fehler) nach OBEN
+        df_sorted = df_abs.sort_values("abs_error_sum", ascending=True)
+
+        fig_dual = go.Figure()
+
+        # Reihenfolge der Balken und Legende: Nieder -> Nenn -> Überlast -> Preis
+
+        # 1. Niederstrom (Navy)
+        fig_dual.add_trace(
+            go.Bar(
+                y=df_sorted["legend_name"],
+                x=df_sorted[col_nieder].abs(),
+                name="Fehler Niederstrom",
+                orientation="h",
+                xaxis="x2",
+                marker_color=COLOR_LOW,
+                offsetgroup=0,
+            )
+        )
+
+        # 2. Nennstrom (Orange)
+        fig_dual.add_trace(
+            go.Bar(
+                y=df_sorted["legend_name"],
+                x=df_sorted[col_nom].abs(),
+                name="Fehler Nennstrom",
+                orientation="h",
+                xaxis="x2",
+                marker_color=COLOR_NOM,
+                offsetgroup=1,
+            )
+        )
+
+        # 3. Überlast (Rot)
+        fig_dual.add_trace(
+            go.Bar(
+                y=df_sorted["legend_name"],
+                x=df_sorted[col_high].abs(),
+                name="Fehler Überlast",
+                orientation="h",
+                xaxis="x2",
+                marker_color=COLOR_HIGH,
+                offsetgroup=2,
+            )
+        )
+
+        # 4. Preis/Volumen (Grün/Grau)
+        fig_dual.add_trace(
+            go.Bar(
+                y=df_sorted["legend_name"],
+                x=df_sorted[col_sec],
+                name=label_sec,
+                orientation="h",
+                xaxis="x",
+                marker_color=color_sec,
+                offsetgroup=3,
+            )
+        )
+
+        fig_dual.update_layout(
+            title=title_str,
+            barmode="group",
+            bargap=0.15,
+            bargroupgap=0.05,
+            height=600 if len(df_sorted) < 10 else 900,
+            # Legende Anpassung (Exakt gleich wie bei Normiert)
+            legend=dict(
+                orientation="h",
+                y=1.25,  # Hoch genug, um nicht im Titel zu hängen
+                x=0.5,
+                xanchor="center",
+                font=dict(size=14, color="black"),
+                bgcolor="rgba(255,255,255,0.9)",
+                traceorder="normal",
+            ),
+            yaxis=dict(autorange="reversed", title=None),
+            # Unten: Preis/Volumen (Primäre X-Achse)
+            xaxis=dict(
+                title=label_sec,
+                side="bottom",
+                showgrid=True,
+                zeroline=True,
+                tickfont=dict(color=color_sec, size=12),
+                title_font=dict(color=color_sec, size=14),
+            ),
+            # Oben: Fehler % (Sekundäre X-Achse)
+            xaxis2=dict(
+                title="Messabweichung Ip/%",
+                side="top",
+                overlaying="x",
+                showgrid=False,
+                zeroline=False,
+                tickfont=dict(color="black", size=12),
+                title_font=dict(color="black", size=14),
+            ),
+            margin=dict(t=140, r=20),  # Platz oben für Legende
+        )
+
+        st.plotly_chart(fig_dual, use_container_width=True)
+        st.session_state["fig_snapshot_tab2"] = fig_dual
+        st.session_state["fig_snapshot_tab2_type"] = "Ökonomie: Performance-Index-2"
     # --- TAB: HEATMAP ---
     with t_heat:
         title_str = TITLES_MAP.get("Heatmap", "Werte-Heatmap")
@@ -2635,7 +2855,8 @@ selected_batch_configs = st.sidebar.multiselect(
 export_opts = [
     "Gesamtübersicht (Tab 1)",
     "Detail-Phasen (Tab 1)",
-    "Ökonomie: Performance-Index",  # Ranking Tabelle
+    "Ökonomie: Performance-Index",
+    "Ökonomie: Performance-Index-2",
     "Ökonomie: Scatter-Plot",
     "Ökonomie: Heatmap",
     "Ökonomie: Boxplot",
@@ -2645,7 +2866,12 @@ export_opts = [
 export_selection = st.sidebar.multiselect(
     "2. Diagramm-Typen wählen:",
     export_opts,
-    default=["Gesamtübersicht (Tab 1)", "Ökonomie: Performance-Index"],
+    default=[
+        "Gesamtübersicht (Tab 1)",
+        "Detail-Phasen (Tab 1)",
+        "Ökonomie: Performance-Index",
+        "Ökonomie: Performance-Index-2",
+    ],
 )
 
 trigger_export_btn = st.sidebar.button("🔄 Batch-Export starten", type="primary")
@@ -2841,13 +3067,20 @@ if trigger_export_btn:
                             width=1123,
                             font=dict(family="Serif", size=14, color="black"),
                             legend=dict(
-                                orientation="h", y=-0.15, x=0.5, xanchor="center",
-                                font=LEGEND_FONT
+                                orientation="h",
+                                y=-0.15,
+                                x=0.5,
+                                xanchor="center",
+                                font=LEGEND_FONT,
                             ),
                         )
                         # Achsen Fonts anpassen
-                        fig_main.update_xaxes(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT)
-                        fig_main.update_yaxes(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT)
+                        fig_main.update_xaxes(
+                            tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT
+                        )
+                        fig_main.update_yaxes(
+                            tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT
+                        )
 
                         y_min = -b_ylim + b_yshift
                         y_max = b_ylim + b_yshift
@@ -2875,10 +3108,14 @@ if trigger_export_btn:
                             fig_s.update_layout(
                                 title=dict(font=TITLE_FONT),
                                 legend=dict(font=LEGEND_FONT),
-                                font=dict(family="Serif", size=14, color="black")
+                                font=dict(family="Serif", size=14, color="black"),
                             )
-                            fig_s.update_xaxes(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT)
-                            fig_s.update_yaxes(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT)
+                            fig_s.update_xaxes(
+                                tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT
+                            )
+                            fig_s.update_yaxes(
+                                tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT
+                            )
 
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Detail_{ph}_MultiCurrent.pdf",
@@ -2984,135 +3221,309 @@ if trigger_export_btn:
                                 height=794,
                                 font=dict(family="Serif", size=14),
                                 legend=dict(
-                                    orientation="h", y=-0.15, x=0.5, xanchor="center",
-                                    font=LEGEND_FONT
+                                    orientation="h",
+                                    y=-0.15,
+                                    x=0.5,
+                                    xanchor="center",
+                                    font=LEGEND_FONT,
                                 ),
-                                xaxis=dict(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT),
-                                yaxis=dict(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT),
+                                xaxis=dict(
+                                    tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT
+                                ),
+                                yaxis=dict(
+                                    tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT
+                                ),
                             )
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Scatter.pdf",
                                 fig_eco.to_image(format="pdf"),
                             )
 
-                        # --- C2) RANKING (Performance Index) ---
-                        if "Ökonomie: Performance-Index" in export_selection:
-                            t_rank = b_titles.get("Performance-Index", "Ranking")
-                            df_rank = df_agg.copy()
-                            df_rank["total_score"] = 0.0
-                            
-                            # Farben für Ranking
-                            ECO_COLORS_EXPORT = {
-                                "Preis (€)": "#2ca02c",             # Grün
-                                "Volumen (Gesamt)": "#8c564b",      # Braun
-                                "Fehler Niederstrom": "#000080",    # Dunkelblau
-                                "Fehler Nennstrom": "#ffbf00",      # Orange
-                                "Fehler Überlast": "#ff0000"        # Rot
-                            }
-                            ECO_ORDER_EXPORT = [
-                                "Preis (€)", "Volumen (Gesamt)", 
-                                "Fehler Niederstrom", "Fehler Nennstrom", "Fehler Überlast"
-                            ]
+                        # Farben (Global für Export)
+                        EXP_C_LOW = "#000080"
+                        EXP_C_NOM = "#FFA500"
+                        EXP_C_HIGH = "#FF0000"
+                        EXP_C_PRICE = "#00aa00"
+                        EXP_C_VOL = "#808080"
 
+                        # Globale Gewichte holen
+                        gw_low = st.session_state.get("w_low_glob", 1.0)
+                        gw_nom = st.session_state.get("w_nom_glob", 1.0)
+                        gw_high = st.session_state.get("w_high_glob", 1.0)
+
+                        # Info-String für PDF Titel
+                        w_info_pdf = f"Gewichte: Nieder x{gw_low}, Nenn x{gw_nom}, Überlast x{gw_high}"
+
+                        # --- C2) RANKING (Performance Index - Normiert & Gewichtet) ---
+                        if "Ökonomie: Performance-Index" in export_selection:
+                            t_base = b_titles.get(
+                                "Performance-Index", "Variantenvergleich (Normiert)"
+                            )
+                            t_rank = f"{t_base}<br><sup>{w_info_pdf}</sup>"
+
+                            df_rank = df_agg.copy()
+                            df_rank["total_weighted_score"] = 0.0
+
+                            # Helper lokal
+                            def get_w_exp(cname):
+                                if "Niederstrom" in cname:
+                                    return gw_low
+                                if "Nennstrom" in cname:
+                                    return gw_nom
+                                if "Überlast" in cname:
+                                    return gw_high
+                                return 1.0
+
+                            # Normierung & Gewichtung für Plot
                             norm_cols = []
-                            for k in k_eco_y:
+                            target_order = [
+                                "Fehler Niederstrom",
+                                "Fehler Nennstrom",
+                                "Fehler Überlast",
+                                "Preis (€)",
+                                "Volumen (Gesamt)",
+                            ]
+                            final_y = [x for x in target_order if x in k_eco_y]
+
+                            for k in final_y:
                                 if k in Y_OPT_EXP:
                                     rc = Y_OPT_EXP[k]
-                                    mx = df_rank[rc].abs().max()
-                                    if mx == 0: mx = 1
-                                    df_rank[k] = (df_rank[rc].abs() / mx) * 100
-                                    df_rank["total_score"] += df_rank[k]
-                                    norm_cols.append(k)
+                                    if rc not in df_rank.columns:
+                                        df_rank[rc] = 0.0  # Safety
 
-                            df_rank = df_rank.sort_values("total_score", ascending=True)
-                            df_l = df_rank.melt(
-                                id_vars=["legend_name"], value_vars=norm_cols,
-                                value_name="Anteil", var_name="Kategorie"
+                                    mx = df_rank[rc].abs().max()
+                                    if mx == 0:
+                                        mx = 1
+
+                                    w = get_w_exp(k)
+                                    p_col = f"norm_{k}"
+                                    # Berechnung: Normiert * Gewicht
+                                    val = (df_rank[rc].abs() / mx) * 100 * w
+
+                                    df_rank[p_col] = val
+                                    df_rank["total_weighted_score"] += val
+                                    norm_cols.append(p_col)
+
+                            # Sortieren nach dem gewichteten Score
+                            df_rank = df_rank.sort_values(
+                                "total_weighted_score", ascending=True
                             )
+
+                            df_l = df_rank.melt(
+                                id_vars=["legend_name"],
+                                value_vars=norm_cols,
+                                value_name="Anteil",
+                                var_name="Kat_Raw",
+                            )
+                            df_l["Kategorie"] = df_l["Kat_Raw"].str.replace("norm_", "")
+
+                            ECO_COLORS_EXPORT = {
+                                "Fehler Niederstrom": EXP_C_LOW,
+                                "Fehler Nennstrom": EXP_C_NOM,
+                                "Fehler Überlast": EXP_C_HIGH,
+                                "Preis (€)": EXP_C_PRICE,
+                                "Volumen (Gesamt)": EXP_C_VOL,
+                            }
 
                             fig_bar = px.bar(
-                                df_l, y="legend_name", x="Anteil", color="Kategorie",
+                                df_l,
+                                y="legend_name",
+                                x="Anteil",
+                                color="Kategorie",
                                 orientation="h",
+                                barmode="group",
                                 color_discrete_map=ECO_COLORS_EXPORT,
-                                category_orders={"Kategorie": ECO_ORDER_EXPORT}
+                                category_orders={"Kategorie": target_order},
                             )
-                            
+
                             fig_bar.update_layout(
                                 title=dict(text=t_rank, font=TITLE_FONT),
+                                # HIER: Titel der Legende entfernen ("Kategorie")
+                                legend_title_text=None,
                                 yaxis=dict(
                                     autorange="reversed",
-                                    tickfont=dict(size=14, family="Arial Black", color="black"), # Hier Arial Black wie gewünscht für Hersteller
-                                    title=None 
+                                    title=None,
+                                    tickfont=dict(size=12, color="black"), # Gleiche Schrift wie Absolut
                                 ),
                                 xaxis=dict(
-                                    title="Anteil am Score (%)",
+                                    title="Gewichteter Score-Index",
                                     tickfont=TICK_FONT,
-                                    title_font=AXIS_TITLE_FONT
+                                    title_font=AXIS_TITLE_FONT,
+                                    showgrid=True,
                                 ),
                                 template="plotly_white",
                                 width=1123,
-                                height=794,
-                                bargap=0.4, 
+                                height=1000, # Einheitliche Höhe für beide Rankings
+                                bargap=0.2,
                                 legend=dict(
-                                    orientation="h", y=-0.15, x=0.5, xanchor="center",
-                                    font=LEGEND_FONT
+                                    orientation="h",
+                                    y=1.12, # Gleiche Höhe wie beim Absolut-Plot
+                                    x=0.5,
+                                    xanchor="center",
+                                    font=LEGEND_FONT, # Einheitliche Schriftart
                                 ),
-                                margin=dict(l=200)
+                                margin=dict(l=200, t=160, r=50), # Ränder angeglichen
                             )
-                            
                             zf.writestr(
-                                f"{safe_folder}/{safe_folder}-Oekonomie_Ranking.pdf",
-                                fig_bar.to_image(format="pdf"),
+                                f"{safe_folder}/{safe_folder}-Oekonomie_Ranking_Norm.pdf",
+                                fig_bar.to_image(format="pdf", width=1123, height=1000), # Explizite Höhe!
                             )
 
-                            # LATEX Export
-                            ltx = []
-                            ltx.append(r"\begin{table}[H]")
-                            ltx.append(r"    \centering")
-                            ltx.append(rf"    \caption{{{t_rank}}}")
-                            ltx.append(rf"    \label{{tab:{sanitize_filename(conf_name)}_ranking}}")
-                            col_def = "p{6cm}" + "c" * (len(norm_cols) + 1)
-                            ltx.append(rf"    \begin{{tabular}}{{{col_def}}}")
-                            ltx.append(r"        \toprule")
-                            h_cells = [r"\textbf{Messsystem}"]
-                            for cn in norm_cols:
-                                cc = cn.replace("%", r"\%").replace("_", r"\_").replace("Ω", r"$\Omega$").replace(" ", r" \\ ")
-                                h_cells.append(rf"\textbf{{\shortstack[c]{{{cc}}}}}")
-                            h_cells.append(r"\textbf{\shortstack[c]{Fehler-Score \\ {[\%]}}}")
-                            ltx.append("        " + " & ".join(h_cells) + r" \\")
-                            ltx.append(r"        \midrule")
-                            for _, r_row in df_rank.iterrows():
-                                n_cl = clean_tex_and_break(r_row["legend_name"])
-                                r_c = [n_cl]
-                                for cn in norm_cols:
-                                    r_c.append(f"{r_row[cn]:.2f}".replace(".", ","))
-                                r_c.append(f"{r_row['total_score']:.2f}".replace(".", ","))
-                                ltx.append("        " + " & ".join(r_c) + r" \\")
-                            ltx.append(r"        \bottomrule")
-                            ltx.append(r"    \end{tabular}")
-                            ltx.append(r"\end{table}")
+                        # --- C2.2) RANKING (Absolut - Dual Axis - Ungewichtet) ---
+                        if "Ökonomie: Performance-Index-2" in export_selection:
+                            t_base2 = b_titles.get(
+                                "Performance-Index-2", "Ranking (Absolut)"
+                            )
+                            # Kein Gewichts-Suffix im Titel
+
+                            col_n = "err_nieder"
+                            col_m = "err_nom"
+                            col_h = "err_high"
+                            if "Preis" in conf_data.get("eco_x", "Preis"):
+                                col_sec = "preis"
+                                lbl_sec = "Preis (€)"
+                                col_sec_color = EXP_C_PRICE
+                            else:
+                                col_sec = "volumen"
+                                lbl_sec = "Volumen (dm³)"
+                                col_sec_color = EXP_C_VOL
+
+                            df_rank2 = df_agg.copy()
+                            for c in [col_n, col_m, col_h, col_sec]:
+                                if c not in df_rank2.columns:
+                                    df_rank2[c] = 0.0
+
+                            # Sortierung UNGEWICHTET (Summe der absoluten Fehler)
+                            df_rank2["abs_sum"] = (
+                                df_rank2[col_n].abs()
+                                + df_rank2[col_m].abs()
+                                + df_rank2[col_h].abs()
+                            )
+                            df_sorted = df_rank2.sort_values("abs_sum", ascending=True)
+
+                            fig_dual = go.Figure()
+                            # 1. Niederstrom (Navy)
+                            fig_dual.add_trace(
+                                go.Bar(
+                                    y=df_sorted["legend_name"],
+                                    x=df_sorted[col_n].abs(),
+                                    name="Fehler Niederstrom",
+                                    orientation="h",
+                                    xaxis="x2",
+                                    marker_color=EXP_C_LOW,
+                                    offsetgroup=0,
+                                )
+                            )
+                            # 2. Nennstrom (Orange)
+                            fig_dual.add_trace(
+                                go.Bar(
+                                    y=df_sorted["legend_name"],
+                                    x=df_sorted[col_m].abs(),
+                                    name="Fehler Nennstrom",
+                                    orientation="h",
+                                    xaxis="x2",
+                                    marker_color=EXP_C_NOM,
+                                    offsetgroup=1,
+                                )
+                            )
+                            # 3. Überlast (Rot)
+                            fig_dual.add_trace(
+                                go.Bar(
+                                    y=df_sorted["legend_name"],
+                                    x=df_sorted[col_h].abs(),
+                                    name="Fehler Überlast",
+                                    orientation="h",
+                                    xaxis="x2",
+                                    marker_color=EXP_C_HIGH,
+                                    offsetgroup=2,
+                                )
+                            )
+                            # 4. Preis/Vol (Grün)
+                            fig_dual.add_trace(
+                                go.Bar(
+                                    y=df_sorted["legend_name"],
+                                    x=df_sorted[col_sec],
+                                    name=lbl_sec,
+                                    orientation="h",
+                                    xaxis="x",
+                                    marker_color=col_sec_color,
+                                    offsetgroup=3,
+                                )
+                            )
+
+                            fig_dual.update_layout(
+                                title=dict(text=t_base2, font=TITLE_FONT),
+                                barmode="group",
+                                bargap=0.15,
+                                height=1000,
+                                width=1123,
+                                legend=dict(
+                                    orientation="h",
+                                    y=1.12, # Gleiche Höhe wie beim Norm-Plot
+                                    x=0.5,
+                                    xanchor="center",
+                                    font=LEGEND_FONT, # Einheitliche Schriftart
+                                    traceorder="normal",
+                                ),
+                                yaxis=dict(
+                                    autorange="reversed",
+                                    title=None,
+                                    tickfont=dict(size=12, color="black"),
+                                    domain=[0, 1], # Volle Höhe nutzen
+                                ),
+                                xaxis=dict(
+                                    title=lbl_sec,
+                                    side="bottom",
+                                    tickfont=dict(color=col_sec_color, size=12), # Farbe der Einheit (Grün/Grau)
+                                    title_font=dict(color=col_sec_color, size=14),
+                                    showgrid=True,
+                                ),
+                                xaxis2=dict(
+                                    title="Messabweichung Ip/%",
+                                    side="top",
+                                    overlaying="x",
+                                    tickfont=TICK_FONT, # Einheitliche Schrift
+                                    title_font=AXIS_TITLE_FONT,
+                                    showgrid=False,
+                                    anchor="free",
+                                    position=1,
+                                ),
+                                margin=dict(t=160, r=50), # Ränder angeglichen
+                                template="plotly_white",
+                            )
                             zf.writestr(
-                                f"{safe_folder}/{safe_folder}-Oekonomie_Ranking.tex",
-                                "\n".join(ltx),
+                                f"{safe_folder}/{safe_folder}-Oekonomie_Ranking_Dual.pdf",
+                                fig_dual.to_image(format="pdf", width=1123, height=1000),
                             )
 
                         # --- C3) HEATMAP ---
                         if "Ökonomie: Heatmap" in export_selection:
                             t_heat = b_titles.get("Heatmap", "Heatmap")
                             df_l = df_agg.melt(
-                                id_vars=["legend_name"], value_vars=sel_y_cols, value_name="Wert",
+                                id_vars=["legend_name"],
+                                value_vars=sel_y_cols,
+                                value_name="Wert",
                             )
                             df_l["Kat"] = df_l["variable"].map(REV_Y_EXP)
                             fh = px.density_heatmap(
-                                df_l, x="legend_name", y="Kat", z="Wert",
-                                text_auto=True, color_continuous_scale="Blues",
+                                df_l,
+                                x="legend_name",
+                                y="Kat",
+                                z="Wert",
+                                text_auto=True,
+                                color_continuous_scale="Blues",
                             )
                             fh.update_layout(
                                 title=dict(text=t_heat, font=TITLE_FONT),
-                                template="plotly_white", width=1123, height=794,
+                                template="plotly_white",
+                                width=1123,
+                                height=794,
                                 font=dict(family="Serif", size=14),
-                                xaxis=dict(tickfont=dict(size=12, family="Arial Black"), title=None),
-                                yaxis=dict(tickfont=TICK_FONT, title=None)
+                                xaxis=dict(
+                                    tickfont=dict(size=12, family="Arial Black"),
+                                    title=None,
+                                ),
+                                yaxis=dict(tickfont=TICK_FONT, title=None),
                             )
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Heatmap.pdf",
@@ -3123,18 +3534,29 @@ if trigger_export_btn:
                         if "Ökonomie: Boxplot" in export_selection:
                             t_box = b_titles.get("Boxplot", "Boxplot")
                             df_l = df_agg.melt(
-                                id_vars=["legend_name"], value_vars=sel_y_cols, value_name="Wert",
+                                id_vars=["legend_name"],
+                                value_vars=sel_y_cols,
+                                value_name="Wert",
                             )
                             df_l["Kat"] = df_l["variable"].map(REV_Y_EXP)
                             fb = px.box(
-                                df_l, x="legend_name", y="Wert", color="Kat",
+                                df_l,
+                                x="legend_name",
+                                y="Wert",
+                                color="Kat",
                             )
                             fb.update_layout(
                                 title=dict(text=t_box, font=TITLE_FONT),
-                                template="plotly_white", width=1123, height=794,
+                                template="plotly_white",
+                                width=1123,
+                                height=794,
                                 legend=dict(orientation="h", y=-0.15, font=LEGEND_FONT),
-                                xaxis=dict(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT),
-                                yaxis=dict(tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT),
+                                xaxis=dict(
+                                    tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT
+                                ),
+                                yaxis=dict(
+                                    tickfont=TICK_FONT, title_font=AXIS_TITLE_FONT
+                                ),
                             )
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Boxplot.pdf",
@@ -3151,23 +3573,32 @@ if trigger_export_btn:
                             fp = make_subplots(specs=[[{"secondary_y": True}]])
                             fp.add_trace(
                                 go.Bar(
-                                    x=dfs["legend_name"], y=dfs[ty], name=tl,
+                                    x=dfs["legend_name"],
+                                    y=dfs[ty],
+                                    name=tl,
                                     marker_color=dfs["color_hex"],
-                                ), secondary_y=False,
+                                ),
+                                secondary_y=False,
                             )
                             fp.add_trace(
                                 go.Scatter(
-                                    x=dfs["legend_name"], y=dfs["cum"], name="Cum %",
-                                    mode="lines+markers", line=dict(color="red"),
-                                ), secondary_y=True,
+                                    x=dfs["legend_name"],
+                                    y=dfs["cum"],
+                                    name="Cum %",
+                                    mode="lines+markers",
+                                    line=dict(color="red"),
+                                ),
+                                secondary_y=True,
                             )
                             fp.update_layout(
                                 title=dict(text=t_par, font=TITLE_FONT),
-                                template="plotly_white", width=1123, height=794,
+                                template="plotly_white",
+                                width=1123,
+                                height=794,
                                 legend=dict(orientation="h", y=-0.15, font=LEGEND_FONT),
                                 xaxis=dict(tickfont=TICK_FONT),
                                 yaxis=dict(tickfont=TICK_FONT),
-                                yaxis2=dict(tickfont=TICK_FONT)
+                                yaxis2=dict(tickfont=TICK_FONT),
                             )
                             zf.writestr(
                                 f"{safe_folder}/{safe_folder}-Oekonomie_Pareto.pdf",
@@ -3187,15 +3618,23 @@ if trigger_export_btn:
                                 rvals.append(rvals[0])
                                 fr.add_trace(
                                     go.Scatterpolar(
-                                        r=rvals, theta=k_eco_y + [k_eco_y[0]],
-                                        fill="toself", name=r_row["legend_name"],
+                                        r=rvals,
+                                        theta=k_eco_y + [k_eco_y[0]],
+                                        fill="toself",
+                                        name=r_row["legend_name"],
                                         line_color=r_row["color_hex"],
                                     )
                                 )
                             fr.update_layout(
-                                polar=dict(radialaxis=dict(visible=True, range=[0, 1], tickfont=TICK_FONT)),
+                                polar=dict(
+                                    radialaxis=dict(
+                                        visible=True, range=[0, 1], tickfont=TICK_FONT
+                                    )
+                                ),
                                 title=dict(text=t_rad, font=TITLE_FONT),
-                                template="plotly_white", width=1123, height=794,
+                                template="plotly_white",
+                                width=1123,
+                                height=794,
                                 legend=dict(orientation="h", y=-0.15, font=LEGEND_FONT),
                             )
                             zf.writestr(
@@ -3223,6 +3662,7 @@ if "zip_data" in st.session_state:
 # --- SPEICHER-LOGIK ---
 # =======================================================
 if st.session_state.get("trigger_save", False):
+    # Aktuelle Werte aus Session State oder Editor sammeln
     current_colors = (
         map_color
         if "map_color" in locals()
@@ -3262,6 +3702,11 @@ if st.session_state.get("trigger_save", False):
         else st.session_state.get("loaded_titles", {})
     )
 
+    # Prüfen, ob die Globale Gewichtung im Session State existiert, sonst Default 1.0
+    s_low = st.session_state.get("w_low_glob", 0.1)
+    s_nom = st.session_state.get("w_nom_glob", 1.0)
+    s_high = st.session_state.get("w_high_glob", 0.5)
+
     snapshot_data = {
         "current": st.session_state.get("k_current", []),
         "geos": st.session_state.get("k_geos", []),
@@ -3285,6 +3730,95 @@ if st.session_state.get("trigger_save", False):
         "eco_x": st.session_state.get("k_eco_x", "Preis (€)"),
         "eco_y": st.session_state.get("k_eco_y", ["Fehler Nennstrom"]),
         "eco_type": st.session_state.get("k_eco_type", "Scatter"),
+        
+        # --- WICHTIG: Hier werden die Gewichte gespeichert ---
+        "weight_low": s_low,
+        "weight_nom": s_nom,
+        "weight_high": s_high,
+        # ---------------------------------------------------
+    }
+
+    save_name = st.session_state["save_name"]
+    save_dashboard_config(save_name, snapshot_data)
+    st.session_state["trigger_save"] = False
+
+    # Damit die Farben nicht verloren gehen beim Rerun
+    st.session_state["loaded_colors"] = current_colors
+    st.session_state["loaded_legends"] = current_legends
+
+    st.toast(f"Konfiguration '{save_name}' erfolgreich gespeichert!", icon="💾")
+    st.rerun()
+    # Aktuelle Werte aus Session State oder Editor sammeln
+    current_colors = (
+        map_color
+        if "map_color" in locals()
+        else st.session_state.get("loaded_colors", {})
+    )
+    current_legends = (
+        map_legend
+        if "map_legend" in locals()
+        else st.session_state.get("loaded_legends", {})
+    )
+    current_styles = (
+        map_style
+        if "map_style" in locals()
+        else st.session_state.get("loaded_styles", {})
+    )
+    current_symbols = (
+        map_symbol
+        if "map_symbol" in locals()
+        else st.session_state.get("loaded_symbols", {})
+    )
+    current_widths = (
+        map_width
+        if "map_width" in locals()
+        else st.session_state.get("loaded_widths", {})
+    )
+    current_visible = (
+        map_visible
+        if "map_visible" in locals()
+        else st.session_state.get("loaded_visible", {})
+    )
+    current_sizes = (
+        map_size if "map_size" in locals() else st.session_state.get("loaded_sizes", {})
+    )
+    current_titles = (
+        TITLES_MAP
+        if "TITLES_MAP" in locals()
+        else st.session_state.get("loaded_titles", {})
+    )
+
+    # Hier werden alle Daten für die JSON-Datei zusammengestellt
+    snapshot_data = {
+        "current": st.session_state.get("k_current", []),
+        "geos": st.session_state.get("k_geos", []),
+        "wandlers": st.session_state.get("k_wandlers", []),
+        "duts": st.session_state.get("k_duts", []),
+        "comp_mode": st.session_state.get("k_comp", "Messgerät (z.B. PAC1)"),
+        "sync_axes": st.session_state.get("k_sync", True),
+        "y_limit": st.session_state.get("k_ylim", 1.5),
+        "y_shift": st.session_state.get("k_yshift", 0.0),
+        "acc_class": st.session_state.get("k_class", 0.2),
+        "show_err_bars": st.session_state.get("k_errbars", True),
+        "bottom_plot_mode": st.session_state.get("k_bottom_mode", "Standardabweichung"),
+        "custom_colors": current_colors,
+        "custom_legends": current_legends,
+        "custom_styles": current_styles,
+        "custom_symbols": current_symbols,
+        "custom_widths": current_widths,
+        "custom_visible": current_visible,
+        "custom_sizes": current_sizes,
+        "custom_titles": current_titles,
+        "eco_x": st.session_state.get("k_eco_x", "Preis (€)"),
+        "eco_y": st.session_state.get("k_eco_y", ["Fehler Nennstrom"]),
+        "eco_type": st.session_state.get("k_eco_type", "Scatter"),
+        
+        # --- HIER IST DIE WICHTIGE ÄNDERUNG ---
+        # Wir speichern die Werte aus den Input-Feldern (w_low_glob, etc.)
+        "weight_low": st.session_state.get("w_low_glob", 1.0),
+        "weight_nom": st.session_state.get("w_nom_glob", 1.0),
+        "weight_high": st.session_state.get("w_high_glob", 1.0),
+        # --------------------------------------
     }
 
     save_name = st.session_state["save_name"]
