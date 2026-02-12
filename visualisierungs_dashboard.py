@@ -2591,10 +2591,10 @@ with tab4:
                             )
                             fig_sel.add_annotation(
                                 x=(s + e) / 2,
-                                y=level + 5,
+                                y=level + 10,
                                 text=f"<b>{level}%</b>",
                                 showarrow=False,
-                                font=dict(color="green", size=10),
+                                font=dict(color="green", size=16, family="Arial Black"),
                             )
                     fig_sel.update_layout(
                         height=350,
