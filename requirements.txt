@@ -1,4 +1,4 @@
-pandas>=2.0.0 
+pandas>=2.0.0
 numpy
 matplotlib
 plotly>=5.0.0
